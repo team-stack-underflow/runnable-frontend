@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 void main() {
   runApp(MaterialApp(
     title: 'RunnableApp',
-    home: RunnableHome(),
+    home: RunnableHome()
+    //home: ReplPage()
   ));
 }
 
@@ -18,7 +19,12 @@ class RunnableHome extends StatelessWidget {
         leading: IconButton(
           icon: Icon(Icons.home),
           tooltip: 'Home',
-          onPressed: null,
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => RunnableHome()),
+            );
+          },
         ),
         title: Text('Runnable'),
         actions: <Widget>[
@@ -71,7 +77,7 @@ class RCSelect extends StatefulWidget {
 }
 
 class _RCSelectState extends State<RCSelect> {
-  var isSelected = [true,false];
+  var setType = [true,false];
   @override
   Widget build(BuildContext context) {
     return ToggleButtons(
@@ -101,16 +107,16 @@ class _RCSelectState extends State<RCSelect> {
       ],
       onPressed: (int index) {
         setState(() {
-          for (int buttonIndex = 0; buttonIndex < isSelected.length; buttonIndex++) {
+          for (int buttonIndex = 0; buttonIndex < setType.length; buttonIndex++) {
             if (buttonIndex == index) {
-              isSelected[buttonIndex] = true;
+              setType[buttonIndex] = true;
             } else {
-              isSelected[buttonIndex] = false;
+              setType[buttonIndex] = false;
             }
           }
         });
       },
-      isSelected: isSelected,
+      isSelected: setType,
     );
   }
 }
@@ -122,26 +128,148 @@ class LangBox extends StatelessWidget {
   final String image;
 
   Widget build(BuildContext context) {
-    return Container(
-        padding: EdgeInsets.all(2), height: 120,
-        child: Card(
-            child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: <Widget>[
-                  Expanded(child:Image.asset("assets/" +image)),
-                  Align(
-                    alignment: FractionalOffset.bottomCenter,
-                    child: Padding(
-                        padding: EdgeInsets.only(bottom: 10.0),
+    return RaisedButton(
+      onPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => ReplPage()),
+        );
+      },
+      child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: <Widget>[
+        Expanded(child: Image.asset("assets/" + image)),
+        Align(
+          alignment: FractionalOffset.bottomCenter,
+          child: Padding(
+              padding: EdgeInsets.only(bottom: 10.0),
+              child: Text(
+                this.name,
+                style: TextStyle(fontSize: 20),
+              ) //Your widget here,
+              ),
+        ),
+      ]));
+  }
+}
+
+class ReplPage extends StatelessWidget {
+  ReplPage({Key key, this.title}) : super(key: key);
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.home),
+          tooltip: 'Home',
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => RunnableHome()),
+            );
+          },
+        ),
+        title: Text('Runnable'),
+        actions: <Widget>[
+          IconButton(
+            icon: Icon(Icons.settings),
+            tooltip: 'Search',
+            onPressed: null,
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          ReplBody(),
+        ]
+      )
+    );
+  }
+}
+
+class ReplBody extends StatefulWidget {
+  @override
+  _ReplBodyState createState() => _ReplBodyState();
+}
+
+class _ReplBodyState extends State<ReplBody> {
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          margin: EdgeInsets.all(8.0),
+          padding: EdgeInsets.all(8.0),
+          constraints: BoxConstraints(
+            minHeight: 300,
+            maxHeight: 300,
+          ),
+          //>>>>>>>>>>>>>>>>>>>>>ProgramOutput()
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: <Widget>[
+            RaisedButton(
+              onPressed: null,
+              child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    Icon(Icons.save),
+                    Padding(
+                        padding: EdgeInsets.all(8.0),
                         child: Text(
-                          this.name,
-                          style: TextStyle(fontSize: 20),
+                          'Save',
+                          style: TextStyle(fontSize: 12),
                         ) //Your widget here,
                     ),
+                  ]
+              )
+            ),
+            RaisedButton(
+              onPressed: null,
+              child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    Icon(Icons.play_arrow),
+                    Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Text(
+                          'Submit',
+                          style: TextStyle(fontSize: 12),
+                        ) //Your widget here,
+                    ),
+                  ]
+              )
+            ),
+          ]
+        ),
+        Container(
+            margin: EdgeInsets.all(8.0),
+            padding: EdgeInsets.all(8.0),
+            decoration: BoxDecoration(
+              border: Border.all(),
+            ),
+            constraints: BoxConstraints(
+              minHeight: 100,
+              maxHeight: 100,
+            ),
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.vertical,
+                reverse: true,
+                  child: TextField(
+                    decoration: InputDecoration.collapsed(
+                      hintText: 'Your input here'
+                    ),
+                    maxLines: null,
                   ),
-                ]
+              )
             )
         )
+      ]
     );
   }
 }
