@@ -225,8 +225,8 @@ class _ReplBodyState extends State<ReplBody> {
           margin: EdgeInsets.all(8.0),
           padding: EdgeInsets.all(8.0),
           constraints: BoxConstraints(
-            minHeight: 300,
-            maxHeight: 300,
+            minHeight: 0.3*MediaQuery.of(context).size.height,
+            maxHeight: 0.3*MediaQuery.of(context).size.height,
           ),
           //>>>>>>>>>>>>>>>>>>>>>ProgramOutput()
         ),
@@ -275,10 +275,11 @@ class _ReplBodyState extends State<ReplBody> {
             padding: EdgeInsets.all(8.0),
             decoration: BoxDecoration(
               border: Border.all(),
+              borderRadius: BorderRadius.all(Radius.circular(10)),
             ),
             constraints: BoxConstraints(
-              minHeight: 100,
-              maxHeight: 100,
+              minHeight: 0.1*MediaQuery.of(context).size.height,
+              maxHeight: 0.1*MediaQuery.of(context).size.height,
             ),
             child: Align(
               alignment: Alignment.topCenter,
@@ -409,10 +410,11 @@ class _CompilerBodyState extends State<CompilerBody> {
               padding: EdgeInsets.all(8.0),
               decoration: BoxDecoration(
                 border: Border.all(),
+                borderRadius: BorderRadius.all(Radius.circular(10)),
               ),
               constraints: BoxConstraints(
-                minHeight: 400,
-                maxHeight: 400,
+                minHeight: 0.4*MediaQuery.of(context).size.height,
+                maxHeight: 0.4*MediaQuery.of(context).size.height,
               ),
               child: Align(
                   alignment: Alignment.topCenter,
@@ -447,8 +449,8 @@ class _CompilerOutputState extends State<CompilerOutput> {
             margin: EdgeInsets.all(8.0),
             padding: EdgeInsets.all(8.0),
             constraints: BoxConstraints(
-              minHeight: 300,
-              maxHeight: 300,
+              minHeight: 0.3*MediaQuery.of(context).size.height,
+              maxHeight: 0.3*MediaQuery.of(context).size.height,
             ),
             //>>>>>>>>>>>>>>>>>>>>>ProgramOutput()
           ),
@@ -481,10 +483,11 @@ class _CompilerOutputState extends State<CompilerOutput> {
               padding: EdgeInsets.all(8.0),
               decoration: BoxDecoration(
                 border: Border.all(),
+                borderRadius: BorderRadius.all(Radius.circular(10)),
               ),
               constraints: BoxConstraints(
-                minHeight: 100,
-                maxHeight: 100,
+                minHeight: 0.1*MediaQuery.of(context).size.height,
+                maxHeight: 0.1*MediaQuery.of(context).size.height,
               ),
               child: Align(
                   alignment: Alignment.topCenter,
