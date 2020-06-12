@@ -20,12 +20,7 @@ class RunnableHome extends StatelessWidget {
         leading: IconButton(
           icon: Icon(Icons.home),
           tooltip: 'Home',
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => RunnableHome()),
-            );
-          },
+          onPressed: null
         ),
         title: Text('Runnable'),
         actions: <Widget>[
@@ -312,41 +307,51 @@ class CompilerPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        appBar: AppBar(
-          leading: IconButton(
-            icon: Icon(Icons.home),
-            tooltip: 'Home',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => RunnableHome()),
-              );
-            },
+    return DefaultTabController(
+        length: 2,
+        child: Scaffold(
+          appBar: AppBar(
+            leading: IconButton(
+              icon: Icon(Icons.home),
+              tooltip: 'Home',
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => RunnableHome()),
+                );
+              },
+            ),
+            title: Text(this.name),
+            actions: <Widget>[
+              IconButton(
+                icon: Icon(Icons.stop),
+                tooltip: 'Stop',
+                onPressed: null,
+              ),
+              IconButton(
+                icon: Icon(Icons.save),
+                tooltip: 'Save',
+                onPressed: null,
+              ),
+              IconButton(
+                icon: Icon(Icons.settings),
+                tooltip: 'Search',
+                onPressed: null,
+              ),
+            ],
+            bottom: TabBar(
+              tabs: [
+                Tab(text: 'Code'),
+                Tab(text: 'Output'),
+              ]
+            )
           ),
-          title: Text(this.name),
-          actions: <Widget>[
-            IconButton(
-              icon: Icon(Icons.stop),
-              tooltip: 'Stop',
-              onPressed: null,
-            ),
-            IconButton(
-              icon: Icon(Icons.save),
-              tooltip: 'Save',
-              onPressed: null,
-            ),
-            IconButton(
-              icon: Icon(Icons.settings),
-              tooltip: 'Search',
-              onPressed: null,
-            ),
-          ],
-        ),
-        body: Column(
+          body: TabBarView(
             children: [
               CompilerBody(),
+              CompilerOutput(),
             ]
+          )
         )
     );
   }
@@ -406,8 +411,8 @@ class _CompilerBodyState extends State<CompilerBody> {
                 border: Border.all(),
               ),
               constraints: BoxConstraints(
-                minHeight: 500,
-                maxHeight: 500,
+                minHeight: 400,
+                maxHeight: 400,
               ),
               child: Align(
                   alignment: Alignment.topCenter,
