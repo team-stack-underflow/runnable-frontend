@@ -4,13 +4,14 @@ void main() {
   runApp(MaterialApp(
     title: 'RunnableApp',
     home: RunnableHome()
-    //home: ReplPage()
+    //home: ReplPage(name: 'Python')
+    //home: CompilerPage(name: 'Python')
   ));
 }
 
 class RunnableHome extends StatelessWidget {
-  RunnableHome({Key key, this.title}) : super(key: key);
-  final String title;
+  RunnableHome({Key key}) : super(key: key);
+  var setType = [true,false];
   @override
   Widget build(BuildContext context) {
     // Scaffold is a layout for the major Material Components.
@@ -38,7 +39,7 @@ class RunnableHome extends StatelessWidget {
       // body is the majority of the screen.
       body: Column(
         children: [
-          RCSelect(), // Selects REPL or Compile
+          RCSelect(type: setType), // Selects REPL or Compile
           GridView.count(
             shrinkWrap: true,
             primary: false,
@@ -49,19 +50,23 @@ class RunnableHome extends StatelessWidget {
             children: <Widget>[
               LangBox(
                   name: 'Python',
-                  image: 'python.png'
+                  image: 'python.png',
+                  type: setType,
               ),
               LangBox(
                   name: 'Java',
-                  image: 'java.png'
+                  image: 'java.png',
+                  type: setType,
               ),
               LangBox(
                   name: 'C',
-                  image: 'c.png'
+                  image: 'c.png',
+                  type: setType,
               ),
               LangBox(
                   name: 'JavaScript',
-                  image: 'javascript.png'
+                  image: 'javascript.png',
+                  type: setType,
               )
             ],
           )
@@ -72,12 +77,15 @@ class RunnableHome extends StatelessWidget {
 }
 
 class RCSelect extends StatefulWidget {
+  RCSelect({Key key, this.type}) : super(key: key);
+  var type;
   @override
-  _RCSelectState createState() => _RCSelectState();
+  _RCSelectState createState() => _RCSelectState(type: this.type);
 }
 
 class _RCSelectState extends State<RCSelect> {
-  var setType = [true,false];
+  _RCSelectState({Key key, this.type}) : super();
+  var type;
   @override
   Widget build(BuildContext context) {
     return ToggleButtons(
@@ -107,33 +115,41 @@ class _RCSelectState extends State<RCSelect> {
       ],
       onPressed: (int index) {
         setState(() {
-          for (int buttonIndex = 0; buttonIndex < setType.length; buttonIndex++) {
+          for (int buttonIndex = 0; buttonIndex < type.length; buttonIndex++) {
             if (buttonIndex == index) {
-              setType[buttonIndex] = true;
+              type[buttonIndex] = true;
             } else {
-              setType[buttonIndex] = false;
+              type[buttonIndex] = false;
             }
           }
         });
       },
-      isSelected: setType,
+      isSelected: this.type,
     );
   }
 }
 
 class LangBox extends StatelessWidget {
-  LangBox({Key key, this.name, this.image})
-      : super(key: key);
+  LangBox({Key key, this.name, this.image, this.type}) : super(key: key);
   final String name;
   final String image;
+  var type;
 
   Widget build(BuildContext context) {
     return RaisedButton(
       onPressed: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => ReplPage()),
-        );
+        if (type[0] == true) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => ReplPage(name: this.name)),
+          );
+        }
+        else {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => CompilerPage(name: this.name)),
+          );
+        }
       },
       child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -153,9 +169,10 @@ class LangBox extends StatelessWidget {
   }
 }
 
+// ReplPage start
 class ReplPage extends StatelessWidget {
-  ReplPage({Key key, this.title}) : super(key: key);
-  final String title;
+  ReplPage({Key key, this.name}) : super(key: key);
+  final String name;
 
   @override
   Widget build(BuildContext context) {
@@ -171,8 +188,18 @@ class ReplPage extends StatelessWidget {
             );
           },
         ),
-        title: Text('Runnable'),
+        title: Text(this.name),
         actions: <Widget>[
+          IconButton(
+            icon: Icon(Icons.stop),
+            tooltip: 'Stop',
+            onPressed: null,
+          ),
+          IconButton(
+            icon: Icon(Icons.save),
+            tooltip: 'Save',
+            onPressed: null,
+          ),
           IconButton(
             icon: Icon(Icons.settings),
             tooltip: 'Search',
@@ -208,42 +235,45 @@ class _ReplBodyState extends State<ReplBody> {
           ),
           //>>>>>>>>>>>>>>>>>>>>>ProgramOutput()
         ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: <Widget>[
-            RaisedButton(
-              onPressed: null,
-              child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    Icon(Icons.save),
-                    Padding(
-                        padding: EdgeInsets.all(8.0),
-                        child: Text(
-                          'Save',
-                          style: TextStyle(fontSize: 12),
-                        ) //Your widget here,
-                    ),
-                  ]
-              )
-            ),
-            RaisedButton(
-              onPressed: null,
-              child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    Icon(Icons.play_arrow),
-                    Padding(
-                        padding: EdgeInsets.all(8.0),
-                        child: Text(
-                          'Submit',
-                          style: TextStyle(fontSize: 12),
-                        ) //Your widget here,
-                    ),
-                  ]
-              )
-            ),
-          ]
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: <Widget>[
+              /*RaisedButton(
+                onPressed: null,
+                child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      Icon(Icons.save),
+                      Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: Text(
+                            'Save',
+                            style: TextStyle(fontSize: 12),
+                          ) //Your widget here,
+                      ),
+                    ]
+                )
+              ),*/
+              RaisedButton(
+                onPressed: null,
+                child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      Icon(Icons.play_arrow),
+                      Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: Text(
+                            'Submit',
+                            style: TextStyle(fontSize: 12),
+                          ) //Your widget here,
+                      ),
+                    ]
+                )
+              ),
+            ]
+          ),
         ),
         Container(
             margin: EdgeInsets.all(8.0),
@@ -270,6 +300,202 @@ class _ReplBodyState extends State<ReplBody> {
             )
         )
       ]
+    );
+  }
+}
+//ReplPage end
+
+//Compiler page start
+class CompilerPage extends StatelessWidget {
+  CompilerPage({Key key, this.name}) : super(key: key);
+  final String name;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        appBar: AppBar(
+          leading: IconButton(
+            icon: Icon(Icons.home),
+            tooltip: 'Home',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => RunnableHome()),
+              );
+            },
+          ),
+          title: Text(this.name),
+          actions: <Widget>[
+            IconButton(
+              icon: Icon(Icons.stop),
+              tooltip: 'Stop',
+              onPressed: null,
+            ),
+            IconButton(
+              icon: Icon(Icons.save),
+              tooltip: 'Save',
+              onPressed: null,
+            ),
+            IconButton(
+              icon: Icon(Icons.settings),
+              tooltip: 'Search',
+              onPressed: null,
+            ),
+          ],
+        ),
+        body: Column(
+            children: [
+              CompilerBody(),
+            ]
+        )
+    );
+  }
+}
+
+class CompilerBody extends StatefulWidget {
+  @override
+  _CompilerBodyState createState() => _CompilerBodyState();
+}
+
+class _CompilerBodyState extends State<CompilerBody> {
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+        children: [
+          Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: <Widget>[
+                RaisedButton(
+                    onPressed: null,
+                    child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          Icon(Icons.file_upload),
+                          Padding(
+                              padding: EdgeInsets.all(8.0),
+                              child: Text(
+                                'Select source file',
+                                style: TextStyle(fontSize: 12),
+                              ) //Your widget here,
+                          ),
+                        ]
+                    )
+                ),
+                RaisedButton(
+                    onPressed: null,
+                    child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          Icon(Icons.play_arrow),
+                          Padding(
+                              padding: EdgeInsets.all(8.0),
+                              child: Text(
+                                'Run program',
+                                style: TextStyle(fontSize: 12),
+                              ) //Your widget here,
+                          ),
+                        ]
+                    )
+                ),
+              ]
+          ),
+          Container(
+              margin: EdgeInsets.all(8.0),
+              padding: EdgeInsets.all(8.0),
+              decoration: BoxDecoration(
+                border: Border.all(),
+              ),
+              constraints: BoxConstraints(
+                minHeight: 500,
+                maxHeight: 500,
+              ),
+              child: Align(
+                  alignment: Alignment.topCenter,
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.vertical,
+                    reverse: true,
+                    child: TextField(
+                      decoration: InputDecoration.collapsed(
+                          hintText: 'Your code here'
+                      ),
+                      maxLines: null,
+                    ),
+                  )
+              )
+          )
+        ]
+    );
+  }
+}
+
+class CompilerOutput extends StatefulWidget {
+  @override
+  _CompilerOutputState createState() => _CompilerOutputState();
+}
+
+class _CompilerOutputState extends State<CompilerOutput> {
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+        children: [
+          Container(
+            margin: EdgeInsets.all(8.0),
+            padding: EdgeInsets.all(8.0),
+            constraints: BoxConstraints(
+              minHeight: 300,
+              maxHeight: 300,
+            ),
+            //>>>>>>>>>>>>>>>>>>>>>ProgramOutput()
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: <Widget>[
+                  RaisedButton(
+                      onPressed: null,
+                      child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            Icon(Icons.play_arrow),
+                            Padding(
+                                padding: EdgeInsets.all(8.0),
+                                child: Text(
+                                  'Submit',
+                                  style: TextStyle(fontSize: 12),
+                                ) //Your widget here,
+                            ),
+                          ]
+                      )
+                  ),
+                ]
+            ),
+          ),
+          Container(
+              margin: EdgeInsets.all(8.0),
+              padding: EdgeInsets.all(8.0),
+              decoration: BoxDecoration(
+                border: Border.all(),
+              ),
+              constraints: BoxConstraints(
+                minHeight: 100,
+                maxHeight: 100,
+              ),
+              child: Align(
+                  alignment: Alignment.topCenter,
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.vertical,
+                    reverse: true,
+                    child: TextField(
+                      decoration: InputDecoration.collapsed(
+                          hintText: 'Your input here'
+                      ),
+                      maxLines: null,
+                    ),
+                  )
+              )
+          )
+        ]
     );
   }
 }
