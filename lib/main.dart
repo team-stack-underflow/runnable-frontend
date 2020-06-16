@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'sizes_helpers.dart';
 
 void main() {
   runApp(MaterialApp(
@@ -11,7 +12,7 @@ void main() {
 
 class RunnableHome extends StatelessWidget {
   RunnableHome({Key key}) : super(key: key);
-  var setType = [true,false];
+
   @override
   Widget build(BuildContext context) {
     // Scaffold is a layout for the major Material Components.
@@ -32,46 +33,61 @@ class RunnableHome extends StatelessWidget {
         ],
       ),
       // body is the majority of the screen.
-      body: Column(
-        children: [
-          RCSelect(type: setType), // Selects REPL or Compile
-          GridView.count(
-            shrinkWrap: true,
-            primary: false,
-            padding: const EdgeInsets.all(20),
-            crossAxisSpacing: 10,
-            mainAxisSpacing: 10,
-            crossAxisCount: 2,
-            children: <Widget>[
-              LangBox(
-                  name: 'Python',
-                  image: 'python.png',
-                  type: setType,
+      body: Center(
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  //RCSelect(type: setType),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(
+                      'Select language',
+                      style: TextStyle(fontSize: 20),
+                    ),
+                  ),
+                ],
+            ),
+            Padding(
+              padding: EdgeInsets.only(bottom: 0.1*usableHeight(context)),
+              child: GridView.count(
+                  shrinkWrap: true,
+                  primary: false,
+                  padding: const EdgeInsets.all(20),
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
+                  crossAxisCount: 2,
+                  physics: BouncingScrollPhysics(),
+                  children: <Widget>[
+                    LangBox(
+                        name: 'Python',
+                        image: 'python.png',
+                    ),
+                    LangBox(
+                        name: 'Java',
+                        image: 'java.png',
+                    ),
+                    LangBox(
+                        name: 'C',
+                        image: 'c.png',
+                    ),
+                    LangBox(
+                        name: 'JavaScript',
+                        image: 'javascript.png',
+                    )
+                  ],
               ),
-              LangBox(
-                  name: 'Java',
-                  image: 'java.png',
-                  type: setType,
-              ),
-              LangBox(
-                  name: 'C',
-                  image: 'c.png',
-                  type: setType,
-              ),
-              LangBox(
-                  name: 'JavaScript',
-                  image: 'javascript.png',
-                  type: setType,
-              )
-            ],
-          )
-        ]
+            ),
+          ]
+        ),
       )
     );
   }
 }
 
-class RCSelect extends StatefulWidget {
+/* class RCSelect extends StatefulWidget {
   RCSelect({Key key, this.type}) : super(key: key);
   var type;
   @override
@@ -123,28 +139,21 @@ class _RCSelectState extends State<RCSelect> {
     );
   }
 }
+*/
 
+// LangBox start
 class LangBox extends StatelessWidget {
-  LangBox({Key key, this.name, this.image, this.type}) : super(key: key);
+  LangBox({Key key, this.name, this.image}) : super(key: key);
   final String name;
   final String image;
-  var type;
 
   Widget build(BuildContext context) {
     return RaisedButton(
       onPressed: () {
-        if (type[0] == true) {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => ReplPage(name: this.name)),
+            MaterialPageRoute(builder: (context) => RCSelectPage(name: this.name)),
           );
-        }
-        else {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => CompilerPage(name: this.name)),
-          );
-        }
       },
       child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -153,7 +162,7 @@ class LangBox extends StatelessWidget {
         Align(
           alignment: FractionalOffset.bottomCenter,
           child: Padding(
-              padding: EdgeInsets.only(bottom: 10.0),
+              padding: EdgeInsets.only(bottom: 0.01*usableHeight(context)),
               child: Text(
                 this.name,
                 style: TextStyle(fontSize: 20),
@@ -163,6 +172,95 @@ class LangBox extends StatelessWidget {
       ]));
   }
 }
+// LangBox end
+
+// RCSelectPage start
+class RCSelectPage extends StatelessWidget {
+  RCSelectPage({Key key, this.name}) : super(key: key);
+  final String name;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        appBar: AppBar(
+          leading: IconButton(
+            icon: Icon(Icons.home),
+            tooltip: 'Home',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => RunnableHome()),
+              );
+            },
+          ),
+          title: Text(name),
+            actions: <Widget>[
+              IconButton(
+                icon: Icon(Icons.settings),
+                tooltip: 'Search',
+                onPressed: null,
+              ),
+            ],
+        ),
+        body: Center(
+          child: ListView(
+              shrinkWrap: true,
+              padding: EdgeInsets.all(8.0),
+              children: <Widget> [
+                Container(
+                  margin: EdgeInsets.symmetric(vertical: 20),
+                  constraints: BoxConstraints(
+                    minHeight: 0.2*usableHeight(context),
+                    maxHeight: 0.2*usableHeight(context),
+                  ),
+                  child: RaisedButton(
+                    onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => ReplPage(name: this.name)),
+                        );
+                      },
+                    color: Colors.yellow,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(0.03*usableHeight(context)),
+                    ),
+                    child: Text(
+                      'REPL',
+                      style: TextStyle(fontSize: 28),
+                    ) //Your widget here,
+                  ),
+                ),
+                Container(
+                  margin: EdgeInsets.symmetric(vertical: 20),
+                  constraints: BoxConstraints(
+                    minHeight: 0.2*usableHeight(context),
+                    maxHeight: 0.2*usableHeight(context),
+                  ),
+                  child: RaisedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => CompilerPage(name: this.name)),
+                        );
+                      },
+                      color: Colors.green,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(0.03*usableHeight(context)),
+                      ),
+                      child: Text(
+                        'Compile',
+                        style: TextStyle(fontSize: 28),
+                      ) //Your widget here,
+                  ),
+                ),
+            ]
+          ),
+        )
+    );
+  }
+}
+// RCSelectPage end
+
 
 // ReplPage start
 class ReplPage extends StatelessWidget {
@@ -181,9 +279,10 @@ class ReplPage extends StatelessWidget {
               context,
               MaterialPageRoute(builder: (context) => RunnableHome()),
             );
+            FocusScope.of(context).unfocus(); // Remove keyboard
           },
         ),
-        title: Text(this.name),
+        title: Text(name),
         actions: <Widget>[
           IconButton(
             icon: Icon(Icons.stop),
@@ -225,8 +324,8 @@ class _ReplBodyState extends State<ReplBody> {
           margin: EdgeInsets.all(8.0),
           padding: EdgeInsets.all(8.0),
           constraints: BoxConstraints(
-            minHeight: 0.3*MediaQuery.of(context).size.height,
-            maxHeight: 0.3*MediaQuery.of(context).size.height,
+            minHeight: 0.3*usableHeight(context),
+            maxHeight: 0.3*usableHeight(context),
           ),
           //>>>>>>>>>>>>>>>>>>>>>ProgramOutput()
         ),
@@ -278,11 +377,11 @@ class _ReplBodyState extends State<ReplBody> {
               borderRadius: BorderRadius.all(Radius.circular(10)),
             ),
             constraints: BoxConstraints(
-              minHeight: 0.1*MediaQuery.of(context).size.height,
-              maxHeight: 0.1*MediaQuery.of(context).size.height,
+              minHeight: 0.1*usableHeight(context),
+              maxHeight: 0.1*usableHeight(context),
             ),
             child: Align(
-              alignment: Alignment.topCenter,
+              alignment: Alignment.bottomCenter,
               child: SingleChildScrollView(
                 scrollDirection: Axis.vertical,
                 reverse: true,
@@ -320,9 +419,10 @@ class CompilerPage extends StatelessWidget {
                   context,
                   MaterialPageRoute(builder: (context) => RunnableHome()),
                 );
+                FocusScope.of(context).unfocus();
               },
             ),
-            title: Text(this.name),
+            title: Text(name),
             actions: <Widget>[
               IconButton(
                 icon: Icon(Icons.stop),
@@ -366,7 +466,7 @@ class CompilerBody extends StatefulWidget {
 class _CompilerBodyState extends State<CompilerBody> {
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return ListView(
         children: [
           Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -413,11 +513,11 @@ class _CompilerBodyState extends State<CompilerBody> {
                 borderRadius: BorderRadius.all(Radius.circular(10)),
               ),
               constraints: BoxConstraints(
-                minHeight: 0.4*MediaQuery.of(context).size.height,
-                maxHeight: 0.4*MediaQuery.of(context).size.height,
+                minHeight: 0.4*usableHeight(context),
+                maxHeight: 0.4*usableHeight(context),
               ),
               child: Align(
-                  alignment: Alignment.topCenter,
+                  alignment: Alignment.bottomCenter,
                   child: SingleChildScrollView(
                     scrollDirection: Axis.vertical,
                     reverse: true,
@@ -443,14 +543,14 @@ class CompilerOutput extends StatefulWidget {
 class _CompilerOutputState extends State<CompilerOutput> {
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return ListView(
         children: [
           Container(
             margin: EdgeInsets.all(8.0),
             padding: EdgeInsets.all(8.0),
             constraints: BoxConstraints(
-              minHeight: 0.3*MediaQuery.of(context).size.height,
-              maxHeight: 0.3*MediaQuery.of(context).size.height,
+              minHeight: 0.3*usableHeight(context),
+              maxHeight: 0.3*usableHeight(context),
             ),
             //>>>>>>>>>>>>>>>>>>>>>ProgramOutput()
           ),
@@ -486,11 +586,11 @@ class _CompilerOutputState extends State<CompilerOutput> {
                 borderRadius: BorderRadius.all(Radius.circular(10)),
               ),
               constraints: BoxConstraints(
-                minHeight: 0.1*MediaQuery.of(context).size.height,
-                maxHeight: 0.1*MediaQuery.of(context).size.height,
+                minHeight: 0.1*usableHeight(context),
+                maxHeight: 0.1*usableHeight(context),
               ),
               child: Align(
-                  alignment: Alignment.topCenter,
+                  alignment: Alignment.bottomCenter,
                   child: SingleChildScrollView(
                     scrollDirection: Axis.vertical,
                     reverse: true,
