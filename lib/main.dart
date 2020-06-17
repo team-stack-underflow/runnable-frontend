@@ -217,7 +217,7 @@ class RCSelectPage extends StatelessWidget {
                     onPressed: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => ReplPage(name: this.name)),
+                          MaterialPageRoute(builder: (context) => CodePage(name: this.name, activeList: [false,true],)),
                         );
                       },
                     color: Colors.yellow,
@@ -240,7 +240,7 @@ class RCSelectPage extends StatelessWidget {
                       onPressed: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => CompilerPage(name: this.name)),
+                          MaterialPageRoute(builder: (context) => CodePage(name: this.name, activeList: [true,false],)),
                         );
                       },
                       color: Colors.green,
@@ -262,10 +262,10 @@ class RCSelectPage extends StatelessWidget {
 // RCSelectPage end
 
 
-// ReplPage start
-class ReplPage extends StatelessWidget {
-  ReplPage({Key key, this.name}) : super(key: key);
+class CodePage extends StatelessWidget {
+  CodePage({Key key, this.name, this.activeList}) : super(key: key);
   final String name;
+  var activeList;
 
   @override
   Widget build(BuildContext context) {
@@ -301,21 +301,111 @@ class ReplPage extends StatelessWidget {
           ),
         ],
       ),
-      body: Column(
+      body: ListView(
         children: [
-          ReplBody(),
+          activeList[0] ? CompilerBody(activeList: activeList) : SizedBox.shrink(),
+          activeList[1] ? ReplBody(activeList: activeList) : SizedBox.shrink(),
         ]
       )
     );
   }
 }
 
+class CompilerBody extends StatefulWidget {
+  CompilerBody({Key key, this.activeList}) : super(key: key);
+  var activeList;
+  @override
+  _CompilerBodyState createState() => _CompilerBodyState();
+}
+
+class _CompilerBodyState extends State<CompilerBody> {
+  _CompilerBodyState({Key key, this.activeList}) : super();
+  var activeList;
+  @override
+  Widget build(BuildContext context) {
+    //if (activeList[0] == true) {
+      return ListView(
+            shrinkWrap: true,
+            children: [
+              Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: <Widget>[
+                    RaisedButton(
+                        onPressed: null,
+                        child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              Icon(Icons.file_upload),
+                              Padding(
+                                  padding: EdgeInsets.all(8.0),
+                                  child: Text(
+                                    'Select source file',
+                                    style: TextStyle(fontSize: 12),
+                                  ) //Your widget here,
+                              ),
+                            ]
+                        )
+                    ),
+                    RaisedButton(
+                        onPressed: null,
+                        child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              Icon(Icons.play_arrow),
+                              Padding(
+                                  padding: EdgeInsets.all(8.0),
+                                  child: Text(
+                                    'Run program',
+                                    style: TextStyle(fontSize: 12),
+                                  ) //Your widget here,
+                              ),
+                            ]
+                        )
+                    ),
+                  ]
+              ),
+              Container(
+                  margin: EdgeInsets.all(8.0),
+                  padding: EdgeInsets.all(8.0),
+                  decoration: BoxDecoration(
+                    border: Border.all(),
+                    borderRadius: BorderRadius.all(Radius.circular(10)),
+                  ),
+                  constraints: BoxConstraints(
+                    minHeight: 0.4*usableHeight(context),
+                    maxHeight: 0.4*usableHeight(context),
+                  ),
+                  child: Align(
+                      alignment: Alignment.bottomCenter,
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.vertical,
+                        reverse: true,
+                        child: TextField(
+                          decoration: InputDecoration.collapsed(
+                              hintText: 'Your code here'
+                          ),
+                          maxLines: null,
+                        ),
+                      )
+                  )
+              )
+            ]
+        );
+    //}
+    //return SizedBox.shrink();
+  }
+}
+
 class ReplBody extends StatefulWidget {
+  ReplBody({Key key, this.activeList}) : super(key: key);
+  var activeList;
   @override
   _ReplBodyState createState() => _ReplBodyState();
 }
 
 class _ReplBodyState extends State<ReplBody> {
+  _ReplBodyState({Key key, this.activeList}) : super();
+  var activeList;
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -398,10 +488,9 @@ class _ReplBodyState extends State<ReplBody> {
     );
   }
 }
-//ReplPage end
 
 //Compiler page start
-class CompilerPage extends StatelessWidget {
+/*class CompilerPage extends StatelessWidget {
   CompilerPage({Key key, this.name}) : super(key: key);
   final String name;
 
@@ -458,82 +547,6 @@ class CompilerPage extends StatelessWidget {
   }
 }
 
-class CompilerBody extends StatefulWidget {
-  @override
-  _CompilerBodyState createState() => _CompilerBodyState();
-}
-
-class _CompilerBodyState extends State<CompilerBody> {
-  @override
-  Widget build(BuildContext context) {
-    return ListView(
-        children: [
-          Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: <Widget>[
-                RaisedButton(
-                    onPressed: null,
-                    child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          Icon(Icons.file_upload),
-                          Padding(
-                              padding: EdgeInsets.all(8.0),
-                              child: Text(
-                                'Select source file',
-                                style: TextStyle(fontSize: 12),
-                              ) //Your widget here,
-                          ),
-                        ]
-                    )
-                ),
-                RaisedButton(
-                    onPressed: null,
-                    child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          Icon(Icons.play_arrow),
-                          Padding(
-                              padding: EdgeInsets.all(8.0),
-                              child: Text(
-                                'Run program',
-                                style: TextStyle(fontSize: 12),
-                              ) //Your widget here,
-                          ),
-                        ]
-                    )
-                ),
-              ]
-          ),
-          Container(
-              margin: EdgeInsets.all(8.0),
-              padding: EdgeInsets.all(8.0),
-              decoration: BoxDecoration(
-                border: Border.all(),
-                borderRadius: BorderRadius.all(Radius.circular(10)),
-              ),
-              constraints: BoxConstraints(
-                minHeight: 0.4*usableHeight(context),
-                maxHeight: 0.4*usableHeight(context),
-              ),
-              child: Align(
-                  alignment: Alignment.bottomCenter,
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.vertical,
-                    reverse: true,
-                    child: TextField(
-                      decoration: InputDecoration.collapsed(
-                          hintText: 'Your code here'
-                      ),
-                      maxLines: null,
-                    ),
-                  )
-              )
-          )
-        ]
-    );
-  }
-}
 
 class CompilerOutput extends StatefulWidget {
   @override
@@ -607,3 +620,4 @@ class _CompilerOutputState extends State<CompilerOutput> {
     );
   }
 }
+*/
