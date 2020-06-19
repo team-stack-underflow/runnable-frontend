@@ -1,4 +1,7 @@
+import 'package:flutter/foundation.dart';
+import 'package:web_socket_channel/io.dart';
 import 'package:flutter/material.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 import 'sizes_helpers.dart';
 
 void main() {
@@ -217,7 +220,7 @@ class RCSelectPage extends StatelessWidget {
                     onPressed: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => CodePage(name: this.name, activeList: [false,true],)),
+                          MaterialPageRoute(builder: (context) => CodePage(name: this.name, activeList: [false,true,false],)),
                         );
                       },
                     color: Colors.yellow,
@@ -240,7 +243,7 @@ class RCSelectPage extends StatelessWidget {
                       onPressed: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => CodePage(name: this.name, activeList: [true,false],)),
+                          MaterialPageRoute(builder: (context) => CodePage(name: this.name, activeList: [true,false,false],)),
                         );
                       },
                       color: Colors.green,
@@ -265,7 +268,8 @@ class RCSelectPage extends StatelessWidget {
 class CodePage extends StatelessWidget {
   CodePage({Key key, this.name, this.activeList}) : super(key: key);
   final String name;
-  var activeList;
+  var activeList; // Compile, Repl, IsRunning
+  final String channelName = 'ws://echo.websocket.org';
 
   @override
   Widget build(BuildContext context) {
@@ -301,111 +305,193 @@ class CodePage extends StatelessWidget {
           ),
         ],
       ),
-      body: ListView(
-        children: [
-          activeList[0] ? CompilerBody(activeList: activeList) : SizedBox.shrink(),
-          activeList[1] ? ReplBody(activeList: activeList) : SizedBox.shrink(),
-        ]
+      body: CodeBody(
+        activeList: activeList,
+        channel: IOWebSocketChannel.connect(channelName),
       )
     );
   }
 }
 
-class CompilerBody extends StatefulWidget {
-  CompilerBody({Key key, this.activeList}) : super(key: key);
+class CodeBody extends StatefulWidget {
+  CodeBody({Key key, this.activeList, this.channel}) : super(key: key);
   var activeList;
+  final WebSocketChannel channel;
+  FocusNode compNode = FocusNode();
+  FocusNode replNode = FocusNode();
+
+  @override
+  _CodeBodyState createState() => _CodeBodyState();
+}
+
+class _CodeBodyState extends State<CodeBody> {
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+        children: [
+          widget.activeList[0] ? CompilerBody(
+              activeList: widget.activeList,
+              notifyParent: refresh,
+              channel: widget.channel,
+              compNode: widget.compNode,
+          ) : SizedBox.shrink(),
+          widget.activeList[1] ? ReplBody(
+              activeList: widget.activeList,
+              channel: widget.channel,
+              replNode: widget.replNode,
+          ) : SizedBox.shrink(),
+        ]
+    );
+  }
+  refresh() {
+    setState(() {});
+  }
+  @override
+  void dispose() {
+    widget.channel.sink.close();
+    super.dispose();
+  }
+}
+
+class CompilerBody extends StatefulWidget {
+  CompilerBody({Key key, this.activeList, this.notifyParent, this.channel, this.compNode}) : super(key: key);
+  var activeList;
+  final Function() notifyParent;
+  final WebSocketChannel channel;
+  FocusNode compNode;
+
   @override
   _CompilerBodyState createState() => _CompilerBodyState();
 }
 
 class _CompilerBodyState extends State<CompilerBody> {
-  _CompilerBodyState({Key key, this.activeList}) : super();
-  var activeList;
+  final TextEditingController _controller = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    widget.compNode.addListener(() {
+      widget.notifyParent();
+    }); // Resize widget on text form selection
+  }
+
   @override
   Widget build(BuildContext context) {
-    //if (activeList[0] == true) {
-      return ListView(
-            shrinkWrap: true,
-            children: [
-              Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: <Widget>[
-                    RaisedButton(
-                        onPressed: null,
-                        child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            children: [
-                              Icon(Icons.file_upload),
-                              Padding(
-                                  padding: EdgeInsets.all(8.0),
-                                  child: Text(
-                                    'Select source file',
-                                    style: TextStyle(fontSize: 12),
-                                  ) //Your widget here,
-                              ),
-                            ]
-                        )
-                    ),
-                    RaisedButton(
-                        onPressed: null,
-                        child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            children: [
-                              Icon(Icons.play_arrow),
-                              Padding(
-                                  padding: EdgeInsets.all(8.0),
-                                  child: Text(
-                                    'Run program',
-                                    style: TextStyle(fontSize: 12),
-                                  ) //Your widget here,
-                              ),
-                            ]
-                        )
-                    ),
-                  ]
-              ),
-              Container(
-                  margin: EdgeInsets.all(8.0),
-                  padding: EdgeInsets.all(8.0),
-                  decoration: BoxDecoration(
-                    border: Border.all(),
-                    borderRadius: BorderRadius.all(Radius.circular(10)),
+    return ListView(
+          shrinkWrap: true,
+          children: [
+            Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: <Widget>[
+                  RaisedButton(
+                      onPressed: null,
+                      child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            Icon(Icons.file_upload),
+                            Padding(
+                                padding: EdgeInsets.all(8.0),
+                                child: Text(
+                                  'Select source file',
+                                  style: TextStyle(fontSize: 12),
+                                ) //Your widget here,
+                            ),
+                          ]
+                      )
                   ),
-                  constraints: BoxConstraints(
-                    minHeight: 0.4*usableHeight(context),
-                    maxHeight: 0.4*usableHeight(context),
+                  RaisedButton(
+                      onPressed: _sendRun,
+                      child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            Icon(Icons.play_arrow),
+                            Padding(
+                                padding: EdgeInsets.all(8.0),
+                                child: Text(
+                                  'Run program',
+                                  style: TextStyle(fontSize: 12),
+                                ),
+                            ),
+                          ]
+                      )
                   ),
-                  child: Align(
-                      alignment: Alignment.bottomCenter,
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.vertical,
-                        reverse: true,
-                        child: TextField(
+                ]
+            ),
+            AnimatedContainer(
+                duration: Duration(milliseconds: 200),
+                margin: EdgeInsets.all(8.0),
+                padding: EdgeInsets.all(8.0),
+                decoration: BoxDecoration(
+                  border: Border.all(),
+                  borderRadius: BorderRadius.all(Radius.circular(10)),
+                ),
+                constraints: BoxConstraints(
+                  minHeight: widget.compNode.hasFocus ? 0.4*usableHeight(context): 0.2*usableHeight(context),
+                  maxHeight: widget.compNode.hasFocus ? 0.4*usableHeight(context): 0.2*usableHeight(context),
+                ),
+                child: Align(
+                    alignment: Alignment.bottomCenter,
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.vertical,
+                      reverse: true,
+                      child: Form(
+                        child: TextFormField(
+                          autofocus: true,
+                          focusNode: widget.compNode,
+                          autocorrect: false,
+                          controller: _controller,
                           decoration: InputDecoration.collapsed(
                               hintText: 'Your code here'
                           ),
                           maxLines: null,
                         ),
-                      )
-                  )
-              )
-            ]
-        );
-    //}
-    //return SizedBox.shrink();
+                      ),
+                    )
+                )
+            ),
+          ]
+      );
+  }
+
+  void _sendRun() {
+    widget.activeList[1] = true;
+    // Close and reopen connection
+    /*if (widget.activeList[2] = true) {
+      widget.channel.sink.close();
+    } else {
+      widget.activeList[2] = true;
+    }*/
+    // Send message
+    if (_controller.text.isNotEmpty) {
+      widget.channel.sink.add(_controller.text);
+    }
+    //widget.notifyParent(); // Check this if changing node focusing!
+    widget.compNode.unfocus();
+  }
+
+  @override
+  void dispose() {
+    // Clean up the controller when the widget is disposed.
+    _controller.dispose();
+    super.dispose();
   }
 }
 
 class ReplBody extends StatefulWidget {
-  ReplBody({Key key, this.activeList}) : super(key: key);
+  ReplBody({Key key, this.activeList, this.channel, this.replNode}) : super(key: key);
   var activeList;
+  final WebSocketChannel channel;
+  FocusNode replNode;
+
   @override
   _ReplBodyState createState() => _ReplBodyState();
 }
 
 class _ReplBodyState extends State<ReplBody> {
-  _ReplBodyState({Key key, this.activeList}) : super();
-  var activeList;
+  //var testList = [];
+  final TextEditingController _controller = TextEditingController();
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -417,7 +503,14 @@ class _ReplBodyState extends State<ReplBody> {
             minHeight: 0.3*usableHeight(context),
             maxHeight: 0.3*usableHeight(context),
           ),
-          //>>>>>>>>>>>>>>>>>>>>>ProgramOutput()
+          child: StreamBuilder(
+            stream: widget.channel.stream,
+            builder: (context, snapshot) {
+              /*testList.add(snapshot.data);
+              debugPrint('$testList');*/
+              return Text(snapshot.hasData ? '${snapshot.data}' : 'None');
+            },
+          )
         ),
         Padding(
           padding: const EdgeInsets.all(8.0),
@@ -441,7 +534,7 @@ class _ReplBodyState extends State<ReplBody> {
                 )
               ),*/
               RaisedButton(
-                onPressed: null,
+                onPressed: _sendSubmit,
                 child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
@@ -467,25 +560,40 @@ class _ReplBodyState extends State<ReplBody> {
               borderRadius: BorderRadius.all(Radius.circular(10)),
             ),
             constraints: BoxConstraints(
-              minHeight: 0.1*usableHeight(context),
-              maxHeight: 0.1*usableHeight(context),
+              minHeight: 0.15*usableHeight(context),
+              maxHeight: 0.15*usableHeight(context),
             ),
             child: Align(
               alignment: Alignment.bottomCenter,
               child: SingleChildScrollView(
                 scrollDirection: Axis.vertical,
                 reverse: true,
-                  child: TextField(
-                    decoration: InputDecoration.collapsed(
-                      hintText: 'Your input here'
+                  child: Form(
+                    child: TextFormField(
+                      autocorrect: false,
+                      controller: _controller,
+                      decoration: InputDecoration.collapsed(
+                        hintText: 'Your code here'
+                      ),
+                      maxLines: null,
                     ),
-                    maxLines: null,
                   ),
               )
             )
         )
       ]
     );
+  }
+  void _sendSubmit() {
+    if (_controller.text.isNotEmpty) {
+      widget.channel.sink.add(_controller.text);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 }
 
