@@ -3,6 +3,7 @@ import 'package:web_socket_channel/io.dart';
 import 'package:flutter/material.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'sizes_helpers.dart';
+import 'dart:convert';
 
 void main() {
   runApp(MaterialApp(
@@ -65,19 +66,19 @@ class RunnableHome extends StatelessWidget {
                   physics: BouncingScrollPhysics(),
                   children: <Widget>[
                     LangBox(
-                        name: 'Python',
+                        name: "Python",
                         image: 'python.png',
                     ),
                     LangBox(
-                        name: 'Java',
+                        name: "Java",
                         image: 'java.png',
                     ),
                     LangBox(
-                        name: 'C',
+                        name: "C",
                         image: 'c.png',
                     ),
                     LangBox(
-                        name: 'JavaScript',
+                        name: "JavaScript",
                         image: 'javascript.png',
                     )
                   ],
@@ -220,7 +221,7 @@ class RCSelectPage extends StatelessWidget {
                     onPressed: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => CodePage(name: this.name, activeList: [false,true,false],)),
+                          MaterialPageRoute(builder: (context) => ReplPage(name: this.name)),
                         );
                       },
                     color: Colors.yellow,
@@ -243,7 +244,7 @@ class RCSelectPage extends StatelessWidget {
                       onPressed: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => CodePage(name: this.name, activeList: [true,false,false],)),
+                          MaterialPageRoute(builder: (context) => CompilerPage(name: this.name)),
                         );
                       },
                       color: Colors.green,
@@ -264,416 +265,104 @@ class RCSelectPage extends StatelessWidget {
 }
 // RCSelectPage end
 
-
-class CodePage extends StatelessWidget {
-  CodePage({Key key, this.name, this.activeList}) : super(key: key);
+// ReplPage start
+class ReplPage extends StatelessWidget {
+  ReplPage({Key key, this.name}) : super(key: key);
   final String name;
-  var activeList; // Compile, Repl, IsRunning
-  final String channelName = 'ws://echo.websocket.org';
+  //final String channelName = 'wss://echo.websocket.org'; // For testing websocket
+  final String channelName = 'wss://s4tdw93cwd.execute-api.us-east-1.amazonaws.com/default/';
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: Icon(Icons.home),
-          tooltip: 'Home',
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => RunnableHome()),
-            );
-            FocusScope.of(context).unfocus(); // Remove keyboard
-          },
+        appBar: AppBar(
+          leading: IconButton(
+            icon: Icon(Icons.home),
+            tooltip: 'Home',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => RunnableHome()),
+              );
+            },
+          ),
+          title: Text(name),
+          actions: <Widget>[
+            IconButton(
+              icon: Icon(Icons.stop),
+              tooltip: 'Stop',
+              onPressed: null,
+            ),
+            IconButton(
+              icon: Icon(Icons.save),
+              tooltip: 'Save',
+              onPressed: null,
+            ),
+            IconButton(
+              icon: Icon(Icons.settings),
+              tooltip: 'Search',
+              onPressed: null,
+            ),
+          ],
         ),
-        title: Text(name),
-        actions: <Widget>[
-          IconButton(
-            icon: Icon(Icons.stop),
-            tooltip: 'Stop',
-            onPressed: null,
-          ),
-          IconButton(
-            icon: Icon(Icons.save),
-            tooltip: 'Save',
-            onPressed: null,
-          ),
-          IconButton(
-            icon: Icon(Icons.settings),
-            tooltip: 'Search',
-            onPressed: null,
-          ),
-        ],
-      ),
-      body: CodeBody(
-        activeList: activeList,
-        channel: IOWebSocketChannel.connect(channelName),
-      )
+        body: ReplBody(
+          name: name,
+          channel: IOWebSocketChannel.connect(channelName),
+        )
     );
-  }
-}
-
-class CodeBody extends StatefulWidget {
-  CodeBody({Key key, this.activeList, this.channel}) : super(key: key);
-  var activeList;
-  final WebSocketChannel channel;
-  FocusNode compNode = FocusNode();
-  FocusNode replNode = FocusNode();
-
-  @override
-  _CodeBodyState createState() => _CodeBodyState();
-}
-
-class _CodeBodyState extends State<CodeBody> {
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView(
-        children: [
-          widget.activeList[0] ? CompilerBody(
-              activeList: widget.activeList,
-              notifyParent: refresh,
-              channel: widget.channel,
-              compNode: widget.compNode,
-          ) : SizedBox.shrink(),
-          widget.activeList[1] ? ReplBody(
-              activeList: widget.activeList,
-              channel: widget.channel,
-              replNode: widget.replNode,
-          ) : SizedBox.shrink(),
-        ]
-    );
-  }
-  refresh() {
-    setState(() {});
-  }
-  @override
-  void dispose() {
-    widget.channel.sink.close();
-    super.dispose();
-  }
-}
-
-class CompilerBody extends StatefulWidget {
-  CompilerBody({Key key, this.activeList, this.notifyParent, this.channel, this.compNode}) : super(key: key);
-  var activeList;
-  final Function() notifyParent;
-  final WebSocketChannel channel;
-  FocusNode compNode;
-
-  @override
-  _CompilerBodyState createState() => _CompilerBodyState();
-}
-
-class _CompilerBodyState extends State<CompilerBody> {
-  final TextEditingController _controller = TextEditingController();
-
-  @override
-  void initState() {
-    super.initState();
-    widget.compNode.addListener(() {
-      widget.notifyParent();
-    }); // Resize widget on text form selection
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView(
-          shrinkWrap: true,
-          children: [
-            Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: <Widget>[
-                  RaisedButton(
-                      onPressed: null,
-                      child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            Icon(Icons.file_upload),
-                            Padding(
-                                padding: EdgeInsets.all(8.0),
-                                child: Text(
-                                  'Select source file',
-                                  style: TextStyle(fontSize: 12),
-                                ) //Your widget here,
-                            ),
-                          ]
-                      )
-                  ),
-                  RaisedButton(
-                      onPressed: _sendRun,
-                      child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            Icon(Icons.play_arrow),
-                            Padding(
-                                padding: EdgeInsets.all(8.0),
-                                child: Text(
-                                  'Run program',
-                                  style: TextStyle(fontSize: 12),
-                                ),
-                            ),
-                          ]
-                      )
-                  ),
-                ]
-            ),
-            AnimatedContainer(
-                duration: Duration(milliseconds: 200),
-                margin: EdgeInsets.all(8.0),
-                padding: EdgeInsets.all(8.0),
-                decoration: BoxDecoration(
-                  border: Border.all(),
-                  borderRadius: BorderRadius.all(Radius.circular(10)),
-                ),
-                constraints: BoxConstraints(
-                  minHeight: widget.compNode.hasFocus ? 0.4*usableHeight(context): 0.2*usableHeight(context),
-                  maxHeight: widget.compNode.hasFocus ? 0.4*usableHeight(context): 0.2*usableHeight(context),
-                ),
-                child: Align(
-                    alignment: Alignment.bottomCenter,
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.vertical,
-                      reverse: true,
-                      child: Form(
-                        child: TextFormField(
-                          autofocus: true,
-                          focusNode: widget.compNode,
-                          autocorrect: false,
-                          controller: _controller,
-                          decoration: InputDecoration.collapsed(
-                              hintText: 'Your code here'
-                          ),
-                          maxLines: null,
-                        ),
-                      ),
-                    )
-                )
-            ),
-          ]
-      );
-  }
-
-  void _sendRun() {
-    widget.activeList[1] = true;
-    // Close and reopen connection
-    /*if (widget.activeList[2] = true) {
-      widget.channel.sink.close();
-    } else {
-      widget.activeList[2] = true;
-    }*/
-    // Send message
-    if (_controller.text.isNotEmpty) {
-      widget.channel.sink.add(_controller.text);
-    }
-    //widget.notifyParent(); // Check this if changing node focusing!
-    widget.compNode.unfocus();
-  }
-
-  @override
-  void dispose() {
-    // Clean up the controller when the widget is disposed.
-    _controller.dispose();
-    super.dispose();
   }
 }
 
 class ReplBody extends StatefulWidget {
-  ReplBody({Key key, this.activeList, this.channel, this.replNode}) : super(key: key);
-  var activeList;
+  ReplBody({Key key, this.name, this.channel}) : super(key: key);
+  final String name;
   final WebSocketChannel channel;
-  FocusNode replNode;
 
   @override
   _ReplBodyState createState() => _ReplBodyState();
 }
 
 class _ReplBodyState extends State<ReplBody> {
-  //var testList = [];
   final TextEditingController _controller = TextEditingController();
+  FocusNode replNode = FocusNode();
+  var replTestList = [];
+  var prevSubmitList = [];
+  var outputList = [];
+
+  @override
+  void initState() {
+    super.initState();
+    //widget.channel.sink.add("test");
+    widget.channel.sink.add(
+        json.encode(
+            {
+              "action" : "launch",
+              "lang" : widget.name.toLowerCase(),
+              "mode" : "repl",
+           }
+        )
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Column(
-      children: [
-        Container(
-          margin: EdgeInsets.all(8.0),
-          padding: EdgeInsets.all(8.0),
-          constraints: BoxConstraints(
-            minHeight: 0.3*usableHeight(context),
-            maxHeight: 0.3*usableHeight(context),
-          ),
-          child: StreamBuilder(
-            stream: widget.channel.stream,
-            builder: (context, snapshot) {
-              /*testList.add(snapshot.data);
-              debugPrint('$testList');*/
-              return Text(snapshot.hasData ? '${snapshot.data}' : 'None');
-            },
-          )
-        ),
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: <Widget>[
-              /*RaisedButton(
-                onPressed: null,
-                child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      Icon(Icons.save),
-                      Padding(
-                          padding: EdgeInsets.all(8.0),
-                          child: Text(
-                            'Save',
-                            style: TextStyle(fontSize: 12),
-                          ) //Your widget here,
-                      ),
-                    ]
-                )
-              ),*/
-              RaisedButton(
-                onPressed: _sendSubmit,
-                child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      Icon(Icons.play_arrow),
-                      Padding(
-                          padding: EdgeInsets.all(8.0),
-                          child: Text(
-                            'Submit',
-                            style: TextStyle(fontSize: 12),
-                          ) //Your widget here,
-                      ),
-                    ]
-                )
-              ),
-            ]
-          ),
-        ),
-        Container(
-            margin: EdgeInsets.all(8.0),
-            padding: EdgeInsets.all(8.0),
-            decoration: BoxDecoration(
-              border: Border.all(),
-              borderRadius: BorderRadius.all(Radius.circular(10)),
-            ),
-            constraints: BoxConstraints(
-              minHeight: 0.15*usableHeight(context),
-              maxHeight: 0.15*usableHeight(context),
-            ),
-            child: Align(
-              alignment: Alignment.bottomCenter,
-              child: SingleChildScrollView(
-                scrollDirection: Axis.vertical,
-                reverse: true,
-                  child: Form(
-                    child: TextFormField(
-                      autocorrect: false,
-                      controller: _controller,
-                      decoration: InputDecoration.collapsed(
-                        hintText: 'Your code here'
-                      ),
-                      maxLines: null,
-                    ),
-                  ),
-              )
-            )
-        )
-      ]
-    );
-  }
-  void _sendSubmit() {
-    if (_controller.text.isNotEmpty) {
-      widget.channel.sink.add(_controller.text);
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-}
-
-//Compiler page start
-/*class CompilerPage extends StatelessWidget {
-  CompilerPage({Key key, this.name}) : super(key: key);
-  final String name;
-
-  @override
-  Widget build(BuildContext context) {
-    return DefaultTabController(
-        length: 2,
-        child: Scaffold(
-          appBar: AppBar(
-            leading: IconButton(
-              icon: Icon(Icons.home),
-              tooltip: 'Home',
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => RunnableHome()),
-                );
-                FocusScope.of(context).unfocus();
-              },
-            ),
-            title: Text(name),
-            actions: <Widget>[
-              IconButton(
-                icon: Icon(Icons.stop),
-                tooltip: 'Stop',
-                onPressed: null,
-              ),
-              IconButton(
-                icon: Icon(Icons.save),
-                tooltip: 'Save',
-                onPressed: null,
-              ),
-              IconButton(
-                icon: Icon(Icons.settings),
-                tooltip: 'Search',
-                onPressed: null,
-              ),
-            ],
-            bottom: TabBar(
-              tabs: [
-                Tab(text: 'Code'),
-                Tab(text: 'Output'),
-              ]
-            )
-          ),
-          body: TabBarView(
-            children: [
-              CompilerBody(),
-              CompilerOutput(),
-            ]
-          )
-        )
-    );
-  }
-}
-
-
-class CompilerOutput extends StatefulWidget {
-  @override
-  _CompilerOutputState createState() => _CompilerOutputState();
-}
-
-class _CompilerOutputState extends State<CompilerOutput> {
-  @override
-  Widget build(BuildContext context) {
-    return ListView(
         children: [
           Container(
-            margin: EdgeInsets.all(8.0),
-            padding: EdgeInsets.all(8.0),
-            constraints: BoxConstraints(
-              minHeight: 0.3*usableHeight(context),
-              maxHeight: 0.3*usableHeight(context),
-            ),
-            //>>>>>>>>>>>>>>>>>>>>>ProgramOutput()
+              margin: EdgeInsets.all(8.0),
+              padding: EdgeInsets.all(8.0),
+              constraints: BoxConstraints(
+                minHeight: 0.3*usableHeight(context),
+                maxHeight: 0.3*usableHeight(context),
+              ),
+              child: StreamBuilder(
+                stream: widget.channel.stream,
+                builder: (context, snapshot) {
+                  replTestList.add(snapshot.data);
+                  debugPrint('$replTestList');
+                  return Text(snapshot.hasData ? '${snapshot.data}' : 'Connecting');
+                },
+              )
           ),
           Padding(
             padding: const EdgeInsets.all(8.0),
@@ -681,7 +370,7 @@ class _CompilerOutputState extends State<CompilerOutput> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: <Widget>[
                   RaisedButton(
-                      onPressed: null,
+                      onPressed: _sendSubmit,
                       child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
@@ -707,19 +396,25 @@ class _CompilerOutputState extends State<CompilerOutput> {
                 borderRadius: BorderRadius.all(Radius.circular(10)),
               ),
               constraints: BoxConstraints(
-                minHeight: 0.1*usableHeight(context),
-                maxHeight: 0.1*usableHeight(context),
+                minHeight: 0.15*usableHeight(context),
+                maxHeight: 0.15*usableHeight(context),
               ),
               child: Align(
                   alignment: Alignment.bottomCenter,
                   child: SingleChildScrollView(
                     scrollDirection: Axis.vertical,
                     reverse: true,
-                    child: TextField(
-                      decoration: InputDecoration.collapsed(
-                          hintText: 'Your input here'
+                    child: Form(
+                      child: TextFormField(
+                        autofocus: true,
+                        focusNode: replNode,
+                        autocorrect: false,
+                        controller: _controller,
+                        decoration: InputDecoration.collapsed(
+                            hintText: 'Your code here'
+                        ),
+                        maxLines: null,
                       ),
-                      maxLines: null,
                     ),
                   )
               )
@@ -727,5 +422,316 @@ class _CompilerOutputState extends State<CompilerOutput> {
         ]
     );
   }
+  
+  void _sendSubmit() {
+    if (_controller.text.isNotEmpty) {
+      //widget.channel.sink.add(_controller.text);
+      widget.channel.sink.add(
+        json.encode(
+          {"action": "input",
+            "input": _controller.text,
+          }
+        )
+      );
+      prevSubmitList.add(_controller.text);
+      _controller.clear();
+      debugPrint('$prevSubmitList');
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.channel.sink.close();
+    _controller.dispose();
+    FocusScope.of(context).unfocus(); // Remove keyboard
+    super.dispose();
+  }
 }
-*/
+// ReplPage end
+
+// CompilerPage start
+class CompilerPage extends StatelessWidget {
+  CompilerPage({Key key, this.name}) : super(key: key);
+  final String name;
+  final String channelName = 'wss://echo.websocket.org'; // For testing websocket
+  //final String channelName = 'wss://s4tdw93cwd.execute-api.us-east-1.amazonaws.com/default/';
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        appBar: AppBar(
+          leading: IconButton(
+            icon: Icon(Icons.home),
+            tooltip: 'Home',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => RunnableHome()),
+              );
+            },
+          ),
+          title: Text(name),
+          actions: <Widget>[
+            IconButton(
+              icon: Icon(Icons.stop),
+              tooltip: 'Stop',
+              onPressed: null,
+            ),
+            IconButton(
+              icon: Icon(Icons.save),
+              tooltip: 'Save',
+              onPressed: null,
+            ),
+            IconButton(
+              icon: Icon(Icons.settings),
+              tooltip: 'Search',
+              onPressed: null,
+            ),
+          ],
+        ),
+        body: CompilerBody(
+          name: name,
+          channel: IOWebSocketChannel.connect(channelName),
+        )
+    );
+  }
+}
+
+class CompilerBody extends StatefulWidget {
+  CompilerBody({Key key, this.name, this.channel}) : super(key: key);
+  final String name;
+  final WebSocketChannel channel;
+
+  @override
+  _CompilerBodyState createState() => _CompilerBodyState();
+}
+
+class _CompilerBodyState extends State<CompilerBody> {
+  final TextEditingController _topController = TextEditingController();
+  final TextEditingController _bottomController = TextEditingController();
+  FocusNode compNode = FocusNode();
+  FocusNode replNode = FocusNode();
+  bool _firstRun = true;
+  bool _visible = false;
+  var compTestList = [];
+  var prevSubmitList = [];
+  var outputList = [];
+
+  @override
+  void initState() {
+    super.initState();
+    compNode.addListener(() {
+      setState(() {});
+    }); // Resize widget on text form selection
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+        children: [
+          Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: <Widget>[
+                RaisedButton(
+                    onPressed: null,
+                    child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          Icon(Icons.file_upload),
+                          Padding(
+                              padding: EdgeInsets.all(8.0),
+                              child: Text(
+                                'Select source file',
+                                style: TextStyle(fontSize: 12),
+                              ) //Your widget here,
+                          ),
+                        ]
+                    )
+                ),
+                RaisedButton(
+                    onPressed: _sendRun,
+                    child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          Icon(Icons.play_arrow),
+                          Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: Text(
+                              'Run program',
+                              style: TextStyle(fontSize: 12),
+                            ),
+                          ),
+                        ]
+                    )
+                ),
+              ]
+          ),
+          AnimatedContainer(
+              duration: Duration(milliseconds: 200),
+              margin: EdgeInsets.all(8.0),
+              padding: EdgeInsets.all(8.0),
+              decoration: BoxDecoration(
+                border: Border.all(),
+                borderRadius: BorderRadius.all(Radius.circular(10)),
+              ),
+              constraints: BoxConstraints(
+                minHeight: compNode.hasFocus ? 0.4*usableHeight(context): 0.2*usableHeight(context),
+                maxHeight: compNode.hasFocus ? 0.4*usableHeight(context): 0.2*usableHeight(context),
+              ),
+              child: Align(
+                  alignment: Alignment.bottomCenter,
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.vertical,
+                    reverse: true,
+                    child: Form(
+                      child: TextFormField(
+                        autofocus: true,
+                        focusNode: compNode,
+                        autocorrect: false,
+                        controller: _topController,
+                        decoration: InputDecoration.collapsed(
+                            hintText: 'Your code here'
+                        ),
+                        maxLines: null,
+                      ),
+                    ),
+                  )
+              )
+          ),
+          AnimatedOpacity(
+            opacity: _visible ? 1.0 : 0.0,
+            duration: Duration(milliseconds: 500),
+            child: Column(
+              children: [
+                  Container(
+                    margin: EdgeInsets.all(8.0),
+                    padding: EdgeInsets.all(8.0),
+                    constraints: BoxConstraints(
+                      minHeight: 0.3*usableHeight(context),
+                      maxHeight: 0.3*usableHeight(context),
+                    ),
+                    child: StreamBuilder(
+                      stream: widget.channel.stream,
+                      builder: (context, snapshot) {
+                        compTestList.add(snapshot.data);
+                        debugPrint('$compTestList');
+                        return Text(snapshot.hasData ? '${snapshot.data}' : 'Connecting');
+                      },
+                    )
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: <Widget>[
+                          RaisedButton(
+                              onPressed: _sendSubmit,
+                              child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                  children: [
+                                    Icon(Icons.play_arrow),
+                                    Padding(
+                                        padding: EdgeInsets.all(8.0),
+                                        child: Text(
+                                          'Submit',
+                                          style: TextStyle(fontSize: 12),
+                                        ) //Your widget here,
+                                    ),
+                                  ]
+                              )
+                          ),
+                        ]
+                    ),
+                  ),
+                  Container(
+                      margin: EdgeInsets.all(8.0),
+                      padding: EdgeInsets.all(8.0),
+                      decoration: BoxDecoration(
+                        border: Border.all(),
+                        borderRadius: BorderRadius.all(Radius.circular(10)),
+                      ),
+                      constraints: BoxConstraints(
+                        minHeight: 0.15*usableHeight(context),
+                        maxHeight: 0.15*usableHeight(context),
+                      ),
+                      child: Align(
+                          alignment: Alignment.bottomCenter,
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.vertical,
+                            reverse: true,
+                            child: Form(
+                              child: TextFormField(
+                                autocorrect: false,
+                                controller: _bottomController,
+                                decoration: InputDecoration.collapsed(
+                                    hintText: 'Your code here'
+                                ),
+                                maxLines: null,
+                              ),
+                            ),
+                          )
+                      )
+                  )
+              ]
+            )
+          ),
+        ]
+    );
+  }
+
+  void _sendRun() {
+    if (_topController.text.isNotEmpty) {
+      if (_firstRun) {
+        widget.channel.sink.add(
+            json.encode(
+                {
+                  "action": "launch",
+                  "lang": widget.name.toLowerCase(),
+                  "mode": "compile",
+                  "prog": _topController.text,
+                }
+            )
+        );
+        setState(() {
+          _visible = true;
+        });
+      }
+      else {
+        widget.channel.sink.add(
+            json.encode(
+                {"action": "input",
+                  "input": _topController.text,
+                }
+            )
+        );
+      }
+      compNode.unfocus();
+    }
+  }
+
+  void _sendSubmit() {
+    if (_bottomController.text.isNotEmpty) {
+      //widget.channel.sink.add(_controller.text);
+      widget.channel.sink.add(
+          json.encode(
+              {"action": "input",
+                "input": _bottomController.text,
+              }
+          )
+      );
+      prevSubmitList.add(_bottomController.text);
+      _bottomController.clear();
+      debugPrint('$prevSubmitList');
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.channel.sink.close();
+    _topController.dispose();
+    _bottomController.dispose();
+    FocusScope.of(context).unfocus(); // Remove keyboard
+    super.dispose();
+  }
+}
+// CompilerPage end
