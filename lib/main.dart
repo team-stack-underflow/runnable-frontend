@@ -545,6 +545,9 @@ class _CompilerBodyState extends State<CompilerBody> {
   void initState() {
     super.initState();
     compNode.addListener(() {
+      if (outputList.isNotEmpty) {
+        outputList.removeLast();
+      }
       setState(() {});
     }); // Resize widget on text form selection
   }
@@ -741,9 +744,8 @@ class _CompilerBodyState extends State<CompilerBody> {
                 }
             )
         );
-        setState(() {
-          _visible = true;
-        });
+        _visible = true;
+        _firstRun = false;
       }
       else {
         widget.channel.sink.add(
