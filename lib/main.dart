@@ -325,7 +325,6 @@ class ReplBody extends StatefulWidget {
 class _ReplBodyState extends State<ReplBody> {
   final TextEditingController _controller = TextEditingController();
   FocusNode replNode = FocusNode();
-  var replTestList = [];
   var prevSubmitList = [];
   var outputList = [];
 
@@ -347,6 +346,7 @@ class _ReplBodyState extends State<ReplBody> {
   @override
   Widget build(BuildContext context) {
     return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
               margin: EdgeInsets.all(8.0),
@@ -354,13 +354,38 @@ class _ReplBodyState extends State<ReplBody> {
               constraints: BoxConstraints(
                 minHeight: 0.3*usableHeight(context),
                 maxHeight: 0.3*usableHeight(context),
+                minWidth: displayWidth(context),
+                maxWidth: displayWidth(context),
               ),
               child: StreamBuilder(
                 stream: widget.channel.stream,
                 builder: (context, snapshot) {
-                  replTestList.add(snapshot.data);
-                  debugPrint('$replTestList');
-                  return Text(snapshot.hasData ? '${snapshot.data}' : 'Connecting');
+                  if (snapshot.hasData) {
+                    outputList.add(snapshot.data);
+                  }
+                  debugPrint('$outputList');
+                  if (!snapshot.hasData) {
+                    return CircularProgressIndicator();
+                  }
+                  return Align(
+                    alignment: Alignment.topLeft,
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.vertical,
+                      reverse: true,
+                      child: Container(
+                        constraints: BoxConstraints(
+                          minWidth: displayWidth(context),
+                          maxWidth: displayWidth(context),
+                        ),
+                        child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              for(var item in outputList) Text(item)
+                            ],
+                        ),
+                      ),
+                    ),
+                  );
                 },
               )
           ),
@@ -513,7 +538,6 @@ class _CompilerBodyState extends State<CompilerBody> {
   FocusNode replNode = FocusNode();
   bool _firstRun = true;
   bool _visible = false;
-  var compTestList = [];
   var prevSubmitList = [];
   var outputList = [];
 
@@ -575,8 +599,8 @@ class _CompilerBodyState extends State<CompilerBody> {
                 borderRadius: BorderRadius.all(Radius.circular(10)),
               ),
               constraints: BoxConstraints(
-                minHeight: compNode.hasFocus ? 0.4*usableHeight(context): 0.2*usableHeight(context),
-                maxHeight: compNode.hasFocus ? 0.4*usableHeight(context): 0.2*usableHeight(context),
+                minHeight: compNode.hasFocus ? 0.4*usableHeight(context): 96,
+                maxHeight: compNode.hasFocus ? 0.4*usableHeight(context): 96,
               ),
               child: Align(
                   alignment: Alignment.bottomCenter,
@@ -609,13 +633,38 @@ class _CompilerBodyState extends State<CompilerBody> {
                     constraints: BoxConstraints(
                       minHeight: 0.3*usableHeight(context),
                       maxHeight: 0.3*usableHeight(context),
+                      minWidth: displayWidth(context),
+                      maxWidth: displayWidth(context),
                     ),
                     child: StreamBuilder(
                       stream: widget.channel.stream,
                       builder: (context, snapshot) {
-                        compTestList.add(snapshot.data);
-                        debugPrint('$compTestList');
-                        return Text(snapshot.hasData ? '${snapshot.data}' : 'Connecting');
+                        if (snapshot.hasData) {
+                          outputList.add(snapshot.data);
+                        }
+                        debugPrint('$outputList');
+                        if (!snapshot.hasData) {
+                          return CircularProgressIndicator();
+                        }
+                        return Align(
+                          alignment: Alignment.topLeft,
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.vertical,
+                            reverse: true,
+                            child: Container(
+                              constraints: BoxConstraints(
+                                minWidth: displayWidth(context),
+                                maxWidth: displayWidth(context),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: <Widget>[
+                                  for(var item in outputList) Text(item)
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
                       },
                     )
                   ),
