@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:web_socket_channel/io.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +9,10 @@ import 'dart:convert';
 void main() {
   runApp(MaterialApp(
     title: 'RunnableApp',
+    theme: ThemeData(
+      primaryColor: Color(0xff00e676),
+      accentColor: Color(0xff424242),
+    ),
     home: RunnableHome()
     //home: ReplPage(name: 'Python')
     //home: CompilerPage(name: 'Python')
@@ -31,7 +36,7 @@ class RunnableHome extends StatelessWidget {
         actions: <Widget>[
           IconButton(
             icon: Icon(Icons.settings),
-            tooltip: 'Search',
+            tooltip: 'Settings',
             onPressed: null,
           ),
         ],
@@ -91,61 +96,6 @@ class RunnableHome extends StatelessWidget {
   }
 }
 
-/* class RCSelect extends StatefulWidget {
-  RCSelect({Key key, this.type}) : super(key: key);
-  var type;
-  @override
-  _RCSelectState createState() => _RCSelectState(type: this.type);
-}
-
-class _RCSelectState extends State<RCSelect> {
-  _RCSelectState({Key key, this.type}) : super();
-  var type;
-  @override
-  Widget build(BuildContext context) {
-    return ToggleButtons(
-      children: <Widget>[
-        Container(
-          margin: const EdgeInsets.all(10.0),
-          // Add colour
-          width: 100.0,
-          height: 48.0,
-          alignment: Alignment.center,
-          child: Text(
-            'REPL',
-            style: TextStyle(fontSize: 20)
-          )
-        ),
-        Container(
-          margin: const EdgeInsets.all(10.0),
-          // Add colour
-          width: 100.0,
-          height: 48.0,
-          alignment: Alignment.center,
-          child: Text(
-            'Compile',
-            style: TextStyle(fontSize: 20),
-          )
-        ),
-      ],
-      onPressed: (int index) {
-        setState(() {
-          for (int buttonIndex = 0; buttonIndex < type.length; buttonIndex++) {
-            if (buttonIndex == index) {
-              type[buttonIndex] = true;
-            } else {
-              type[buttonIndex] = false;
-            }
-          }
-        });
-      },
-      isSelected: this.type,
-    );
-  }
-}
-*/
-
-// LangBox start
 class LangBox extends StatelessWidget {
   LangBox({Key key, this.name, this.image}) : super(key: key);
   final String name;
@@ -162,7 +112,17 @@ class LangBox extends StatelessWidget {
       child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
-        Expanded(child: Image.asset("assets/" + image)),
+        Expanded(
+          child: Container(
+            margin: EdgeInsets.all(0.03*usableHeight(context)),
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage('assets/' + image),
+                fit: BoxFit.contain,
+              ),
+            ),
+          ),
+        ),
         Align(
           alignment: FractionalOffset.bottomCenter,
           child: Padding(
@@ -176,7 +136,7 @@ class LangBox extends StatelessWidget {
       ]));
   }
 }
-// LangBox end
+// Homepage end
 
 // RCSelectPage start
 class RCSelectPage extends StatelessWidget {
@@ -201,7 +161,7 @@ class RCSelectPage extends StatelessWidget {
             actions: <Widget>[
               IconButton(
                 icon: Icon(Icons.settings),
-                tooltip: 'Search',
+                tooltip: 'Settings',
                 onPressed: null,
               ),
             ],
@@ -211,35 +171,44 @@ class RCSelectPage extends StatelessWidget {
               shrinkWrap: true,
               padding: EdgeInsets.all(8.0),
               children: <Widget> [
-                Container(
-                  margin: EdgeInsets.symmetric(vertical: 20),
-                  constraints: BoxConstraints(
-                    minHeight: 0.2*usableHeight(context),
-                    maxHeight: 0.2*usableHeight(context),
-                  ),
+                Padding(
+                  padding: EdgeInsets.symmetric(vertical: 20),
                   child: RaisedButton(
-                    onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => ReplPage(name: this.name)),
-                        );
+                      onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => ReplPage(name: this.name)),
+                          );
                       },
-                    color: Colors.yellow,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(0.03*usableHeight(context)),
-                    ),
-                    child: Text(
-                      'REPL',
-                      style: TextStyle(fontSize: 28),
-                    ) //Your widget here,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(0.03*usableHeight(context)),
+                      ),
+                      color: Theme.of(context).primaryColor,
+                      child: Container(
+                          decoration: BoxDecoration(
+                            image: DecorationImage(
+                              image: AssetImage('assets/select_background.png'),
+                              fit: BoxFit.fill,
+                            ),
+                            borderRadius: BorderRadius.circular(0.03*usableHeight(context)),
+                          ),
+                          constraints: BoxConstraints(
+                            minHeight: 0.2*usableHeight(context),
+                            maxHeight: 0.2*usableHeight(context),
+                            minWidth: displayWidth(context),
+                            maxWidth: displayWidth(context),
+                          ),
+                          child: Center(
+                            child: Text(
+                                'REPL',
+                                style: TextStyle(fontSize: 28),
+                            ),
+                          )
+                      ),
                   ),
                 ),
-                Container(
-                  margin: EdgeInsets.symmetric(vertical: 20),
-                  constraints: BoxConstraints(
-                    minHeight: 0.2*usableHeight(context),
-                    maxHeight: 0.2*usableHeight(context),
-                  ),
+                Padding(
+                  padding: EdgeInsets.symmetric(vertical: 20),
                   child: RaisedButton(
                       onPressed: () {
                         Navigator.push(
@@ -247,14 +216,31 @@ class RCSelectPage extends StatelessWidget {
                           MaterialPageRoute(builder: (context) => CompilerPage(name: this.name)),
                         );
                       },
-                      color: Colors.green,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(0.03*usableHeight(context)),
                       ),
-                      child: Text(
-                        'Compile',
-                        style: TextStyle(fontSize: 28),
-                      ) //Your widget here,
+                      color: Theme.of(context).primaryColor,
+                      child: Container(
+                          decoration: BoxDecoration(
+                            image: DecorationImage(
+                              image: AssetImage('assets/select_background.png'),
+                              fit: BoxFit.fill,
+                            ),
+                            borderRadius: BorderRadius.circular(0.03*usableHeight(context)),
+                          ),
+                          constraints: BoxConstraints(
+                            minHeight: 0.2*usableHeight(context),
+                            maxHeight: 0.2*usableHeight(context),
+                            minWidth: displayWidth(context),
+                            maxWidth: displayWidth(context),
+                          ),
+                          child: Center(
+                            child: Text(
+                              'Compile',
+                              style: TextStyle(fontSize: 28),
+                            ),
+                          )
+                      ),//Your widget here,
                   ),
                 ),
             ]
@@ -300,7 +286,7 @@ class ReplPage extends StatelessWidget {
             ),
             IconButton(
               icon: Icon(Icons.settings),
-              tooltip: 'Search',
+              tooltip: 'Settings',
               onPressed: null,
             ),
           ],
@@ -395,6 +381,7 @@ class _ReplBodyState extends State<ReplBody> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: <Widget>[
                   RaisedButton(
+                      color: Theme.of(context).primaryColor,
                       onPressed: _sendSubmit,
                       child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -509,7 +496,7 @@ class CompilerPage extends StatelessWidget {
             ),
             IconButton(
               icon: Icon(Icons.settings),
-              tooltip: 'Search',
+              tooltip: 'Settings',
               onPressed: null,
             ),
           ],
@@ -556,42 +543,47 @@ class _CompilerBodyState extends State<CompilerBody> {
   Widget build(BuildContext context) {
     return ListView(
         children: [
-          Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: <Widget>[
-                RaisedButton(
-                    onPressed: null,
-                    child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          Icon(Icons.file_upload),
-                          Padding(
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: <Widget>[
+                  RaisedButton(
+                      color: Theme.of(context).primaryColor,
+                      onPressed: null,
+                      child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            Icon(Icons.file_upload),
+                            Padding(
+                                padding: EdgeInsets.all(8.0),
+                                child: Text(
+                                  'Select source file',
+                                  style: TextStyle(fontSize: 12),
+                                ) //Your widget here,
+                            ),
+                          ]
+                      )
+                  ),
+                  RaisedButton(
+                      color: Theme.of(context).primaryColor,
+                      onPressed: _sendRun,
+                      child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            Icon(Icons.play_arrow),
+                            Padding(
                               padding: EdgeInsets.all(8.0),
                               child: Text(
-                                'Select source file',
+                                'Run',
                                 style: TextStyle(fontSize: 12),
-                              ) //Your widget here,
-                          ),
-                        ]
-                    )
-                ),
-                RaisedButton(
-                    onPressed: _sendRun,
-                    child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          Icon(Icons.play_arrow),
-                          Padding(
-                            padding: EdgeInsets.all(8.0),
-                            child: Text(
-                              'Run program',
-                              style: TextStyle(fontSize: 12),
+                              ),
                             ),
-                          ),
-                        ]
-                    )
-                ),
-              ]
+                          ]
+                      )
+                  ),
+                ]
+            ),
           ),
           AnimatedContainer(
               duration: Duration(milliseconds: 200),
@@ -677,6 +669,7 @@ class _CompilerBodyState extends State<CompilerBody> {
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: <Widget>[
                           RaisedButton(
+                              color: Theme.of(context).primaryColor,
                               onPressed: _sendSubmit,
                               child: Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceAround,
