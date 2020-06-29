@@ -311,8 +311,8 @@ class ReplBody extends StatefulWidget {
 class _ReplBodyState extends State<ReplBody> {
   final TextEditingController _controller = TextEditingController();
   FocusNode replNode = FocusNode();
-  var prevSubmitList = [];
   var outputList = [];
+  var containerId = 'none';
 
   @override
   void initState() {
@@ -347,7 +347,17 @@ class _ReplBodyState extends State<ReplBody> {
                 stream: widget.channel.stream,
                 builder: (context, snapshot) {
                   if (snapshot.hasData) {
-                    outputList.add(snapshot.data);
+                    Map<String, dynamic> outputData = jsonDecode(snapshot.data);
+                    if (outputData["containerId"] != null) {
+                      containerId = outputData["containerId"];
+                    }
+                    if (outputData["output"] != null) {
+                      if (outputData["output"].substring(0,4) == '>>> ') {
+                        outputList.add(outputData["output"].substring(4));
+                      } else {
+                        outputList.add(outputData["output"]);
+                      }
+                    }
                   }
                   debugPrint('$outputList');
                   if (!snapshot.hasData) {
@@ -438,6 +448,7 @@ class _ReplBodyState extends State<ReplBody> {
   void _sendSubmit() {
     if (_controller.text.isNotEmpty) {
       //widget.channel.sink.add(_controller.text);
+      outputList.add('>>> ' + _controller.text);
       widget.channel.sink.add(
         json.encode(
           {"action": "input",
@@ -445,9 +456,7 @@ class _ReplBodyState extends State<ReplBody> {
           }
         )
       );
-      prevSubmitList.add(_controller.text);
       _controller.clear();
-      debugPrint('$prevSubmitList');
     }
   }
 
@@ -465,8 +474,8 @@ class _ReplBodyState extends State<ReplBody> {
 class CompilerPage extends StatelessWidget {
   CompilerPage({Key key, this.name}) : super(key: key);
   final String name;
-  final String channelName = 'wss://echo.websocket.org'; // For testing websocket
-  //final String channelName = 'wss://s4tdw93cwd.execute-api.us-east-1.amazonaws.com/default/';
+  //final String channelName = 'wss://echo.websocket.org'; // For testing websocket
+  final String channelName = 'wss://s4tdw93cwd.execute-api.us-east-1.amazonaws.com/default/';
 
   @override
   Widget build(BuildContext context) {
@@ -525,8 +534,8 @@ class _CompilerBodyState extends State<CompilerBody> {
   FocusNode replNode = FocusNode();
   bool _firstRun = true;
   bool _visible = false;
-  var prevSubmitList = [];
   var outputList = [];
+  var containerId = 'none';
 
   @override
   void initState() {
@@ -635,7 +644,14 @@ class _CompilerBodyState extends State<CompilerBody> {
                       stream: widget.channel.stream,
                       builder: (context, snapshot) {
                         if (snapshot.hasData) {
-                          outputList.add(snapshot.data);
+                          Map<String, dynamic> outputData = jsonDecode(snapshot.data);
+                          if (outputData["containerId"] != null) {
+                            containerId = outputData["containerId"];
+                          }
+                          if (outputData["output"] != null) {
+                            outputList.add(outputData["output"]);
+                          }
+                          //outputList.add(snapshot.data);
                         }
                         debugPrint('$outputList');
                         if (!snapshot.hasData) {
@@ -743,8 +759,11 @@ class _CompilerBodyState extends State<CompilerBody> {
       else {
         widget.channel.sink.add(
             json.encode(
-                {"action": "input",
-                  "input": _topController.text,
+                {
+                  "action": "launch",
+                  "lang": widget.name.toLowerCase(),
+                  "mode": "compile",
+                  "prog": _topController.text,
                 }
             )
         );
@@ -756,6 +775,7 @@ class _CompilerBodyState extends State<CompilerBody> {
   void _sendSubmit() {
     if (_bottomController.text.isNotEmpty) {
       //widget.channel.sink.add(_controller.text);
+      outputList.add(_bottomController.text);
       widget.channel.sink.add(
           json.encode(
               {"action": "input",
@@ -763,9 +783,7 @@ class _CompilerBodyState extends State<CompilerBody> {
               }
           )
       );
-      prevSubmitList.add(_bottomController.text);
       _bottomController.clear();
-      debugPrint('$prevSubmitList');
     }
   }
 
