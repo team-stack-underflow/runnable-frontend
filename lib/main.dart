@@ -16,11 +16,15 @@ void main() {
     home: RunnableHome()
     //home: ReplPage(name: 'Python')
     //home: CompilerPage(name: 'Python')
+    //home: SettingsPage()
   ));
 }
 
 class RunnableHome extends StatelessWidget {
   RunnableHome({Key key}) : super(key: key);
+  Map settings = {
+    'storage': 'default'
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +41,12 @@ class RunnableHome extends StatelessWidget {
           IconButton(
             icon: Icon(Icons.settings),
             tooltip: 'Settings',
-            onPressed: null,
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => SettingsPage(settings: settings)),
+              );
+            },
           ),
         ],
       ),
@@ -71,20 +80,24 @@ class RunnableHome extends StatelessWidget {
                   physics: BouncingScrollPhysics(),
                   children: <Widget>[
                     LangBox(
-                        name: "Python",
-                        image: 'python.png',
+                      name: "Python",
+                      image: 'python.png',
+                      settings: settings,
                     ),
                     LangBox(
-                        name: "Java",
-                        image: 'java.png',
+                      name: "Java",
+                      image: 'java.png',
+                      settings: settings,
                     ),
                     LangBox(
-                        name: "C",
-                        image: 'c.png',
+                      name: "C",
+                      image: 'c.png',
+                      settings: settings,
                     ),
                     LangBox(
-                        name: "JavaScript",
-                        image: 'javascript.png',
+                      name: "JavaScript",
+                      image: 'javascript.png',
+                      settings: settings,
                     )
                   ],
               ),
@@ -97,16 +110,17 @@ class RunnableHome extends StatelessWidget {
 }
 
 class LangBox extends StatelessWidget {
-  LangBox({Key key, this.name, this.image}) : super(key: key);
+  LangBox({Key key, this.name, this.image, this.settings}) : super(key: key);
   final String name;
   final String image;
+  var settings;
 
   Widget build(BuildContext context) {
     return RaisedButton(
       onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => RCSelectPage(name: this.name)),
+            MaterialPageRoute(builder: (context) => RCSelectPage(name: name, settings: settings)),
           );
       },
       child: Column(
@@ -140,8 +154,9 @@ class LangBox extends StatelessWidget {
 
 // RCSelectPage start
 class RCSelectPage extends StatelessWidget {
-  RCSelectPage({Key key, this.name}) : super(key: key);
+  RCSelectPage({Key key, this.name, this.settings}) : super(key: key);
   final String name;
+  var settings;
 
   @override
   Widget build(BuildContext context) {
@@ -797,3 +812,74 @@ class _CompilerBodyState extends State<CompilerBody> {
   }
 }
 // CompilerPage end
+
+// SettingsPage start
+class SettingsPage extends StatelessWidget {
+  SettingsPage({Key key, this.settings}) : super(key: key);
+  var settings;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        appBar: AppBar(
+          title: Text('Settings'),
+        ),
+        body: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Card(
+                child: ListTile(
+                  leading: Icon(Icons.book),
+                  title: Text('User guide'),
+                  trailing: Icon(Icons.keyboard_arrow_right),
+                  onTap: null,
+                )
+              ),
+              Card(
+                  child: ListTile(
+                    leading: Icon(Icons.sd_storage),
+                    title: Text('Storage location'),
+                    subtitle: Text(settings['storage']),
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: Text('Change storage location'),
+                            content: Text('Browse files'),
+                            actions: [
+                              FlatButton(
+                                child: Text('Save'),
+                                onPressed: null,
+                              ),
+                            ],
+                          );
+                        }
+                      );
+                    }
+                  )
+              ),
+              Card(
+                  child: ListTile(
+                    leading: Icon(Icons.help),
+                    title: Text('About'),
+                    trailing: Icon(Icons.keyboard_arrow_right),
+                    onTap: null,
+                  )
+              ),
+              Card(
+                  child: ListTile(
+                    leading: Icon(Icons.bug_report),
+                    title: Text('Report a bug'),
+                    trailing: Icon(Icons.keyboard_arrow_right),
+                    onTap: null,
+                  )
+              ),
+            ],
+          )
+        )
+    );
+  }
+}
+// SettingsPage end
