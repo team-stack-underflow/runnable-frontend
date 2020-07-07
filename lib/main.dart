@@ -3,8 +3,13 @@ import 'package:flutter/foundation.dart';
 import 'package:web_socket_channel/io.dart';
 import 'package:flutter/material.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:file_picker/file_picker.dart';
 import 'sizes_helpers.dart';
 import 'dart:convert';
+import 'dart:async';
+import 'dart:io';
 
 void main() {
   runApp(MaterialApp(
@@ -13,18 +18,65 @@ void main() {
       primaryColor: Color(0xff00e676),
       accentColor: Color(0xff424242),
     ),
-    home: RunnableHome()
+    home: SplashScreen()
+    //home: RunnableHome()
     //home: ReplPage(name: 'Python')
     //home: CompilerPage(name: 'Python')
     //home: SettingsPage()
   ));
 }
 
+class SplashScreen extends StatefulWidget {
+  @override
+  _SplashScreenState createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _initSettings();
+    Timer(
+        Duration(seconds: 2),
+        () => Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (BuildContext context) => RunnableHome())
+        )
+    );
+  }
+
+  Future _initSettings() async {
+    SharedPreferences settingsMap = await SharedPreferences.getInstance();
+
+    var storage = settingsMap.getString('storage') ?? 'Does not exist';
+    if (storage == 'Does not exist') {
+      final directory = await getApplicationDocumentsDirectory();
+      final storageLocation = Directory('${directory.path}/storage/');
+      String storagePath;
+      if(await storageLocation.exists()) {
+        storagePath = storageLocation.path;
+      } else {
+        storageLocation.create(recursive: true)
+            .then((Directory storageLocation) {
+          storagePath = storageLocation.path;
+        });
+      }
+      settingsMap.setString('storage', storagePath);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Center(
+        child: Text('Welcome to Runnable'),
+      ),
+    );
+  }
+}
+
 class RunnableHome extends StatelessWidget {
   RunnableHome({Key key}) : super(key: key);
-  Map settings = {
-    'storage': 'default'
-  };
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +96,7 @@ class RunnableHome extends StatelessWidget {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => SettingsPage(settings: settings)),
+                MaterialPageRoute(builder: (context) => SettingsPage()),
               );
             },
           ),
@@ -82,22 +134,18 @@ class RunnableHome extends StatelessWidget {
                     LangBox(
                       name: "Python",
                       image: 'python.png',
-                      settings: settings,
                     ),
                     LangBox(
                       name: "Java",
                       image: 'java.png',
-                      settings: settings,
                     ),
                     LangBox(
                       name: "C",
                       image: 'c.png',
-                      settings: settings,
                     ),
                     LangBox(
                       name: "JavaScript",
                       image: 'javascript.png',
-                      settings: settings,
                     )
                   ],
               ),
@@ -110,19 +158,19 @@ class RunnableHome extends StatelessWidget {
 }
 
 class LangBox extends StatelessWidget {
-  LangBox({Key key, this.name, this.image, this.settings}) : super(key: key);
+  LangBox({Key key, this.name, this.image}) : super(key: key);
   final String name;
   final String image;
-  var settings;
 
   Widget build(BuildContext context) {
     return RaisedButton(
       onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => RCSelectPage(name: name, settings: settings)),
+            MaterialPageRoute(builder: (context) => RCSelectPage(name: name)),
           );
       },
+      color: Colors.white,
       child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
@@ -142,7 +190,7 @@ class LangBox extends StatelessWidget {
           child: Padding(
               padding: EdgeInsets.only(bottom: 0.01*usableHeight(context)),
               child: Text(
-                this.name,
+                name,
                 style: TextStyle(fontSize: 20),
               ) //Your widget here,
               ),
@@ -154,9 +202,8 @@ class LangBox extends StatelessWidget {
 
 // RCSelectPage start
 class RCSelectPage extends StatelessWidget {
-  RCSelectPage({Key key, this.name, this.settings}) : super(key: key);
+  RCSelectPage({Key key, this.name}) : super(key: key);
   final String name;
-  var settings;
 
   @override
   Widget build(BuildContext context) {
@@ -346,8 +393,7 @@ class _ReplBodyState extends State<ReplBody> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return ListView(
         children: [
           Container(
               margin: EdgeInsets.all(8.0),
@@ -401,7 +447,7 @@ class _ReplBodyState extends State<ReplBody> {
               )
           ),
           Padding(
-            padding: const EdgeInsets.all(8.0),
+            padding: EdgeInsets.symmetric(horizontal: 8.0),
             child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: <Widget>[
@@ -611,7 +657,7 @@ class _CompilerBodyState extends State<CompilerBody> {
           ),
           AnimatedContainer(
               duration: Duration(milliseconds: 200),
-              margin: EdgeInsets.all(8.0),
+              margin: EdgeInsets.symmetric(horizontal: 8.0),
               padding: EdgeInsets.all(8.0),
               decoration: BoxDecoration(
                 border: Border.all(),
@@ -695,7 +741,7 @@ class _CompilerBodyState extends State<CompilerBody> {
                     )
                   ),
                   Padding(
-                    padding: const EdgeInsets.all(8.0),
+                    padding: EdgeInsets.symmetric(horizontal: 8.0),
                     child: Row(
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: <Widget>[
@@ -789,8 +835,7 @@ class _CompilerBodyState extends State<CompilerBody> {
 
   void _sendSubmit() {
     if (_bottomController.text.isNotEmpty) {
-      //widget.channel.sink.add(_controller.text);
-      outputList.add(_bottomController.text);
+      //outputList.add(_bottomController.text);
       widget.channel.sink.add(
           json.encode(
               {"action": "input",
@@ -814,9 +859,32 @@ class _CompilerBodyState extends State<CompilerBody> {
 // CompilerPage end
 
 // SettingsPage start
-class SettingsPage extends StatelessWidget {
-  SettingsPage({Key key, this.settings}) : super(key: key);
-  var settings;
+class SettingsPage extends StatefulWidget {
+  SettingsPage({Key key}) : super(key: key);
+
+  @override
+  _SettingsPageState createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends State<SettingsPage> {
+  SharedPreferences settingsMap;
+  var _storage = 'Loading';
+  var _tempStorage = 'Loading';
+  StateSetter _setStorageState;// To set state of storage dialog
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSettings();
+  }
+
+  Future _loadSettings() async {
+    settingsMap = await SharedPreferences.getInstance();
+    setState(() {
+      _storage = settingsMap.getString('storage') ?? 'Null';
+      _tempStorage = settingsMap.getString('storage') ?? 'Null';
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -840,23 +908,38 @@ class SettingsPage extends StatelessWidget {
                   child: ListTile(
                     leading: Icon(Icons.sd_storage),
                     title: Text('Storage location'),
-                    subtitle: Text(settings['storage']),
-                    onTap: () {
-                      showDialog(
+                    subtitle: Text(_storage),
+                    onTap: () async {
+                      await showDialog(
                         context: context,
                         builder: (BuildContext context) {
-                          return AlertDialog(
-                            title: Text('Change storage location'),
-                            content: Text('Browse files'),
-                            actions: [
-                              FlatButton(
-                                child: Text('Save'),
-                                onPressed: null,
-                              ),
-                            ],
+                          return StatefulBuilder(
+                            builder: (context, setState) {
+                              _setStorageState = setState;
+                              return AlertDialog(
+                                title: Text('Change storage location'),
+                                content: FlatButton(
+                                    child: Text(_tempStorage),
+                                    onPressed: _browseFiles,
+                                ),
+                                actions: [
+                                  FlatButton(
+                                    child: Text(
+                                      'Save',
+                                      style: TextStyle(
+                                        color: Theme.of(context).primaryColor,
+                                      ),
+                                    ),
+                                    onPressed: _saveLocation,
+                                  ),
+                                ],
+                              );
+                            }
                           );
                         }
-                      );
+                      ).then((val) {
+                        _tempStorage = _storage; // Reset temp to original on dialog dismissal
+                      });
                     }
                   )
               ),
@@ -880,6 +963,20 @@ class SettingsPage extends StatelessWidget {
           )
         )
     );
+  }
+
+  void _browseFiles() async {
+    _tempStorage = await FilePicker.getDirectoryPath() ?? _storage;
+    _setStorageState(() {});
+  }
+
+  void _saveLocation() {
+    settingsMap.remove('storage');
+    settingsMap.setString('storage', _tempStorage);
+    setState(() {
+      _storage = _tempStorage;
+    });
+    Navigator.pop(context);
   }
 }
 // SettingsPage end

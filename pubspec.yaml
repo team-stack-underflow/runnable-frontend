@@ -31,6 +31,13 @@ dependencies:
   # To make server requests
   web_socket_channel: ^1.1.0
 
+  # To save simple data
+  shared_preferences: ^0.5.7+3
+
+  # To save/load user files
+  path_provider: ^1.6.11
+  file_picker: ^1.12.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
