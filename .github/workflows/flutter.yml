@@ -1,0 +1,40 @@
+name: Flutter CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test-and-build:
+    name: Run tests and build APK
+    runs-on: ubuntu-latest
+      
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v1
+      
+    - name: Setup Java for Flutter Actions
+      uses: actions/setup-java@v1
+      with:
+        java-version: '12.x'
+    
+    - name: Setup Flutter Actions
+      uses: subosito/flutter-action@v1
+      with:
+        channel: 'stable'
+    
+    - name: Get dependencies
+      run: flutter pub get
+    
+    - name: Run tests
+      run: flutter test
+    
+    - name: Build APK
+      run: flutter build apk --split-per-abi
+    
+    - name: Upload APK file
+      if: ${{ success() }}
+      uses: actions/upload-artifact@v2
+      with:
+        name: apk
+        path: build/app/outputs/apk/
