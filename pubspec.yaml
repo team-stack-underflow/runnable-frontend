@@ -38,6 +38,9 @@ dependencies:
   path_provider: ^1.6.11
   file_picker: ^1.12.0
 
+  # To ask for user permission
+  permission_handler: ^5.0.1+1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

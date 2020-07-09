@@ -6,6 +6,7 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'sizes_helpers.dart';
 import 'dart:convert';
 import 'dart:async';
@@ -75,6 +76,7 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 }
 
+// Homepage start
 class RunnableHome extends StatelessWidget {
   RunnableHome({Key key}) : super(key: key);
 
@@ -204,6 +206,8 @@ class LangBox extends StatelessWidget {
 class RCSelectPage extends StatelessWidget {
   RCSelectPage({Key key, this.name}) : super(key: key);
   final String name;
+  //final String channelName = 'wss://echo.websocket.org'; // For testing websocket
+  final String channelName = 'wss://s4tdw93cwd.execute-api.us-east-1.amazonaws.com/default/';
 
   @override
   Widget build(BuildContext context) {
@@ -224,7 +228,12 @@ class RCSelectPage extends StatelessWidget {
               IconButton(
                 icon: Icon(Icons.settings),
                 tooltip: 'Settings',
-                onPressed: null,
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => SettingsPage()),
+                  );
+                },
               ),
             ],
         ),
@@ -239,7 +248,10 @@ class RCSelectPage extends StatelessWidget {
                       onPressed: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => ReplPage(name: this.name)),
+                            MaterialPageRoute(builder: (context) => ReplPage(
+                                name: this.name,
+                                channel: IOWebSocketChannel.connect(channelName),
+                            )),
                           );
                       },
                       shape: RoundedRectangleBorder(
@@ -314,11 +326,47 @@ class RCSelectPage extends StatelessWidget {
 // RCSelectPage end
 
 // ReplPage start
-class ReplPage extends StatelessWidget {
-  ReplPage({Key key, this.name}) : super(key: key);
+class ReplPage extends StatefulWidget {
+  ReplPage({Key key, this.name, this.channel}) : super(key: key);
   final String name;
-  //final String channelName = 'wss://echo.websocket.org'; // For testing websocket
-  final String channelName = 'wss://s4tdw93cwd.execute-api.us-east-1.amazonaws.com/default/';
+  final WebSocketChannel channel;
+
+  @override
+  _ReplPageState createState() => _ReplPageState();
+}
+
+class _ReplPageState extends State<ReplPage> {
+  var _storage = 'Loading';
+  var _tempStorage = 'Loading';
+  StateSetter _setStorageState;
+  SharedPreferences settingsMap;
+  final TextEditingController _saveController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+
+  final TextEditingController _controller = TextEditingController();
+  FocusNode replNode = FocusNode();
+  var outputList = [];
+  var containerId = 'none';
+
+  @override
+  void initState() {
+    super.initState();
+    _initRepl();
+    widget.channel.sink.add(
+        json.encode(
+            {
+              "action" : "launch",
+              "lang" : widget.name.toLowerCase(),
+              "mode" : "repl",
+            }
+        )
+    );
+  }
+
+  void _initRepl() async {
+    settingsMap = await SharedPreferences.getInstance();
+    _storage = settingsMap.getString('storage');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -334,7 +382,7 @@ class ReplPage extends StatelessWidget {
               );
             },
           ),
-          title: Text(name),
+          title: Text(widget.name),
           actions: <Widget>[
             IconButton(
               icon: Icon(Icons.stop),
@@ -344,178 +392,227 @@ class ReplPage extends StatelessWidget {
             IconButton(
               icon: Icon(Icons.save),
               tooltip: 'Save',
-              onPressed: null,
+              onPressed: () async {
+                settingsMap = await SharedPreferences.getInstance();
+                _storage = settingsMap.getString('storage');
+                _tempStorage = _storage;
+                await showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return StatefulBuilder(
+                          builder: (context, setState) {
+                            _setStorageState = setState;
+                            return AlertDialog(
+                              title: Text('Save as text file'),
+                              content: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Form(
+                                    key: _formKey,
+                                    child: TextFormField(
+                                      autocorrect: false,
+                                      controller: _saveController,
+                                      decoration: InputDecoration.collapsed(
+                                          hintText: 'Your file name'
+                                      ),
+                                      maxLines: 1,
+                                      validator: (value) {
+                                        if (value.isEmpty) {
+                                          return 'Please enter a valid file name';
+                                        }
+                                        return null;
+                                      },
+                                    ),
+                                  ),
+                                  FlatButton(
+                                    child: Text(_tempStorage),
+                                    onPressed: _browseFiles,
+                                  ),
+                                ],
+                              ),
+                              actions: [
+                                FlatButton(
+                                  child: Text(
+                                    'Save',
+                                    style: TextStyle(
+                                      color: Theme.of(context).primaryColor,
+                                    ),
+                                  ),
+                                  onPressed: _saveFile,
+                                ),
+                              ],
+                            );
+                          }
+                      );
+                    }
+                );
+              },
             ),
             IconButton(
               icon: Icon(Icons.settings),
               tooltip: 'Settings',
-              onPressed: null,
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => SettingsPage()),
+                );
+              },
             ),
           ],
         ),
-        body: ReplBody(
-          name: name,
-          channel: IOWebSocketChannel.connect(channelName),
-        )
-    );
-  }
-}
-
-class ReplBody extends StatefulWidget {
-  ReplBody({Key key, this.name, this.channel}) : super(key: key);
-  final String name;
-  final WebSocketChannel channel;
-
-  @override
-  _ReplBodyState createState() => _ReplBodyState();
-}
-
-class _ReplBodyState extends State<ReplBody> {
-  final TextEditingController _controller = TextEditingController();
-  FocusNode replNode = FocusNode();
-  var outputList = [];
-  var containerId = 'none';
-
-  @override
-  void initState() {
-    super.initState();
-    //widget.channel.sink.add("test");
-    widget.channel.sink.add(
-        json.encode(
-            {
-              "action" : "launch",
-              "lang" : widget.name.toLowerCase(),
-              "mode" : "repl",
-           }
-        )
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView(
-        children: [
-          Container(
-              margin: EdgeInsets.all(8.0),
-              padding: EdgeInsets.all(8.0),
-              constraints: BoxConstraints(
-                minHeight: 0.3*usableHeight(context),
-                maxHeight: 0.3*usableHeight(context),
-                minWidth: displayWidth(context),
-                maxWidth: displayWidth(context),
-              ),
-              child: StreamBuilder(
-                stream: widget.channel.stream,
-                builder: (context, snapshot) {
-                  if (snapshot.hasData) {
-                    Map<String, dynamic> outputData = jsonDecode(snapshot.data);
-                    if (outputData["containerId"] != null) {
-                      containerId = outputData["containerId"];
-                    }
-                    if (outputData["output"] != null) {
-                      if (outputData["output"].substring(0,4) == '>>> ') {
-                        outputList.add(outputData["output"].substring(4));
-                      } else {
-                        outputList.add(outputData["output"]);
-                      }
-                    }
-                  }
-                  debugPrint('$outputList');
-                  if (!snapshot.hasData) {
-                    return CircularProgressIndicator();
-                  }
-                  return Align(
-                    alignment: Alignment.topLeft,
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.vertical,
-                      reverse: true,
-                      child: Container(
-                        constraints: BoxConstraints(
-                          minWidth: displayWidth(context),
-                          maxWidth: displayWidth(context),
-                        ),
-                        child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: <Widget>[
-                              for(var item in outputList) Text(item)
-                            ],
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              )
-          ),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 8.0),
-            child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: <Widget>[
-                  RaisedButton(
-                      color: Theme.of(context).primaryColor,
-                      onPressed: _sendSubmit,
-                      child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            Icon(Icons.play_arrow),
-                            Padding(
-                                padding: EdgeInsets.all(8.0),
-                                child: Text(
-                                  'Submit',
-                                  style: TextStyle(fontSize: 12),
-                                ) //Your widget here,
-                            ),
-                          ]
-                      )
+        body: ListView(
+            children: [
+              Container(
+                  margin: EdgeInsets.all(8.0),
+                  padding: EdgeInsets.all(8.0),
+                  constraints: BoxConstraints(
+                    minHeight: 0.3*usableHeight(context),
+                    maxHeight: 0.3*usableHeight(context),
+                    minWidth: displayWidth(context),
+                    maxWidth: displayWidth(context),
                   ),
-                ]
-            ),
-          ),
-          Container(
-              margin: EdgeInsets.all(8.0),
-              padding: EdgeInsets.all(8.0),
-              decoration: BoxDecoration(
-                border: Border.all(),
-                borderRadius: BorderRadius.all(Radius.circular(10)),
-              ),
-              constraints: BoxConstraints(
-                minHeight: 0.15*usableHeight(context),
-                maxHeight: 0.15*usableHeight(context),
-              ),
-              child: Align(
-                  alignment: Alignment.bottomCenter,
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.vertical,
-                    reverse: true,
-                    child: Form(
-                      child: TextFormField(
-                        autofocus: true,
-                        focusNode: replNode,
-                        autocorrect: false,
-                        controller: _controller,
-                        decoration: InputDecoration.collapsed(
-                            hintText: 'Your code here'
+                  child: StreamBuilder(
+                    stream: widget.channel.stream,
+                    builder: (context, snapshot) {
+                      if (snapshot.hasData) {
+                        Map<String, dynamic> outputData = jsonDecode(snapshot.data);
+                        if (outputData["containerId"] != null) {
+                          containerId = outputData["containerId"];
+                        }
+                        if (outputData["output"] != null) {
+                          if (outputData["output"].substring(0,4) == '>>> ') {
+                            outputList.add(outputData["output"].substring(4));
+                          } else {
+                            outputList.add(outputData["output"]);
+                          }
+                        }
+                      }
+                      debugPrint('$outputList');
+                      if (!snapshot.hasData) {
+                        return CircularProgressIndicator();
+                      }
+                      return Align(
+                        alignment: Alignment.topLeft,
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.vertical,
+                          reverse: true,
+                          child: Container(
+                            constraints: BoxConstraints(
+                              minWidth: displayWidth(context),
+                              maxWidth: displayWidth(context),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: <Widget>[
+                                for(var item in outputList) Text(item)
+                              ],
+                            ),
+                          ),
                         ),
-                        maxLines: null,
+                      );
+                    },
+                  )
+              ),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 8.0),
+                child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: <Widget>[
+                      RaisedButton(
+                          color: Theme.of(context).primaryColor,
+                          onPressed: _sendSubmit,
+                          child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: [
+                                Icon(Icons.play_arrow),
+                                Padding(
+                                    padding: EdgeInsets.all(8.0),
+                                    child: Text(
+                                      'Submit',
+                                      style: TextStyle(fontSize: 12),
+                                    ) //Your widget here,
+                                ),
+                              ]
+                          )
                       ),
-                    ),
+                    ]
+                ),
+              ),
+              Container(
+                  margin: EdgeInsets.all(8.0),
+                  padding: EdgeInsets.all(8.0),
+                  decoration: BoxDecoration(
+                    border: Border.all(),
+                    borderRadius: BorderRadius.all(Radius.circular(10)),
+                  ),
+                  constraints: BoxConstraints(
+                    minHeight: 0.15*usableHeight(context),
+                    maxHeight: 0.15*usableHeight(context),
+                  ),
+                  child: Align(
+                      alignment: Alignment.bottomCenter,
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.vertical,
+                        reverse: true,
+                        child: Form(
+                          child: TextFormField(
+                            autofocus: true,
+                            focusNode: replNode,
+                            autocorrect: false,
+                            controller: _controller,
+                            decoration: InputDecoration.collapsed(
+                                hintText: 'Your code here'
+                            ),
+                            maxLines: null,
+                          ),
+                        ),
+                      )
                   )
               )
-          )
-        ]
+            ]
+        ),
     );
   }
-  
+
+  void _browseFiles() async {
+    _tempStorage = await FilePicker.getDirectoryPath() ?? _storage;
+    _setStorageState(() {});
+  }
+
+  void _saveFile() async {
+/*    PermissionStatus status = await Permission.storage.status;
+    if (status.isUndetermined) {
+      // You can request multiple permissions at once.
+      Map<Permission, PermissionStatus> statuses = await [
+        Permission.storage,
+      ].request();
+      print(statuses[Permission.storage]); // it should print PermissionStatus.granted
+    }*/
+    Permission.storage.request();
+    if (await Permission.storage.request().isGranted) {
+      if (_formKey.currentState.validate()) {
+        String fileName = _saveController.text;
+        File file = File('$_tempStorage/$fileName');
+        String contents = '';
+        outputList.forEach((line) {
+          contents = contents + line + '\n';
+        });
+        file.writeAsString(contents);
+        _saveController.clear();
+      }
+    }
+  }
+
   void _sendSubmit() {
     if (_controller.text.isNotEmpty) {
       //widget.channel.sink.add(_controller.text);
       outputList.add('>>> ' + _controller.text);
       widget.channel.sink.add(
-        json.encode(
-          {"action": "input",
-            "input": _controller.text,
-          }
-        )
+          json.encode(
+              {"action": "input",
+                "input": _controller.text,
+              }
+          )
       );
       _controller.clear();
     }
@@ -567,7 +664,12 @@ class CompilerPage extends StatelessWidget {
             IconButton(
               icon: Icon(Icons.settings),
               tooltip: 'Settings',
-              onPressed: null,
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => SettingsPage()),
+                );
+              },
             ),
           ],
         ),
@@ -870,7 +972,7 @@ class _SettingsPageState extends State<SettingsPage> {
   SharedPreferences settingsMap;
   var _storage = 'Loading';
   var _tempStorage = 'Loading';
-  StateSetter _setStorageState;// To set state of storage dialog
+  StateSetter _setStorageState; // To set state of storage dialog
 
   @override
   void initState() {
