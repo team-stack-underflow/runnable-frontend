@@ -1031,12 +1031,15 @@ class _CompilerPageState extends State<CompilerPage> {
 
   void _loadFile() async {
     if (_fileToOpen != 'Browse files') {
-      try {
-        File file = await File(_fileToOpen);
-        String contents = await file.readAsString();
-        _topController.text = contents;
-      } catch (e) {}
-      Navigator.pop(context);
+      Permission.storage.request();
+      if (await Permission.storage.request().isGranted) {
+        try {
+          File file = await File(_fileToOpen);
+          String contents = await file.readAsString();
+          _topController.text = contents;
+        } catch (e) {}
+        Navigator.pop(context);
+      }
     }
   }
 
