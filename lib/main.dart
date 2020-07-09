@@ -287,7 +287,10 @@ class RCSelectPage extends StatelessWidget {
                       onPressed: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => CompilerPage(name: this.name)),
+                          MaterialPageRoute(builder: (context) => CompilerPage(
+                              name: this.name,
+                              channel: IOWebSocketChannel.connect(channelName),
+                          )),
                         );
                       },
                       shape: RoundedRectangleBorder(
@@ -336,15 +339,16 @@ class ReplPage extends StatefulWidget {
 }
 
 class _ReplPageState extends State<ReplPage> {
+  // Variables for storage settings
+  final TextEditingController _saveController = TextEditingController();
+  final _storageFormKey = GlobalKey<FormState>();
   var _storage = 'Loading';
-  var _tempStorage = 'Loading';
   StateSetter _setStorageState;
   SharedPreferences settingsMap;
-  final TextEditingController _saveController = TextEditingController();
-  final _formKey = GlobalKey<FormState>();
 
+  // Page variables
   final TextEditingController _controller = TextEditingController();
-  FocusNode replNode = FocusNode();
+  final FocusNode replNode = FocusNode();
   var outputList = [];
   var containerId = 'none';
 
@@ -395,7 +399,6 @@ class _ReplPageState extends State<ReplPage> {
               onPressed: () async {
                 settingsMap = await SharedPreferences.getInstance();
                 _storage = settingsMap.getString('storage');
-                _tempStorage = _storage;
                 await showDialog(
                     context: context,
                     builder: (BuildContext context) {
@@ -408,7 +411,7 @@ class _ReplPageState extends State<ReplPage> {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Form(
-                                    key: _formKey,
+                                    key: _storageFormKey,
                                     child: TextFormField(
                                       autocorrect: false,
                                       controller: _saveController,
@@ -425,7 +428,7 @@ class _ReplPageState extends State<ReplPage> {
                                     ),
                                   ),
                                   FlatButton(
-                                    child: Text(_tempStorage),
+                                    child: Text(_storage),
                                     onPressed: _browseFiles,
                                   ),
                                 ],
@@ -575,7 +578,7 @@ class _ReplPageState extends State<ReplPage> {
   }
 
   void _browseFiles() async {
-    _tempStorage = await FilePicker.getDirectoryPath() ?? _storage;
+    _storage = await FilePicker.getDirectoryPath() ?? _storage;
     _setStorageState(() {});
   }
 
@@ -590,15 +593,23 @@ class _ReplPageState extends State<ReplPage> {
     }*/
     Permission.storage.request();
     if (await Permission.storage.request().isGranted) {
-      if (_formKey.currentState.validate()) {
+      if (_storageFormKey.currentState.validate()) {
         String fileName = _saveController.text;
-        File file = File('$_tempStorage/$fileName');
+        File file = File('$_storage/$fileName.txt');
         String contents = '';
         outputList.forEach((line) {
           contents = contents + line + '\n';
         });
         file.writeAsString(contents);
+
         _saveController.clear();
+
+        if (_storage != settingsMap.getString('storage')) {
+          settingsMap.remove('storage');
+          settingsMap.setString('storage', _storage);
+        }
+
+        Navigator.pop(context);
       }
     }
   }
@@ -629,11 +640,45 @@ class _ReplPageState extends State<ReplPage> {
 // ReplPage end
 
 // CompilerPage start
-class CompilerPage extends StatelessWidget {
-  CompilerPage({Key key, this.name}) : super(key: key);
+class CompilerPage extends StatefulWidget {
+  CompilerPage({Key key, this.name, this.channel}) : super(key: key);
   final String name;
-  //final String channelName = 'wss://echo.websocket.org'; // For testing websocket
-  final String channelName = 'wss://s4tdw93cwd.execute-api.us-east-1.amazonaws.com/default/';
+  final WebSocketChannel channel;
+
+  @override
+  _CompilerPageState createState() => _CompilerPageState();
+}
+
+class _CompilerPageState extends State<CompilerPage> {
+  // Variables for storage settings
+  final TextEditingController _saveController = TextEditingController();
+  final _storageFormKey = GlobalKey<FormState>();
+  var _storage = 'Loading';
+  var _fileToOpen = 'Browse files';
+  StateSetter _setStorageState;
+  StateSetter _setLoadState;
+  SharedPreferences settingsMap;
+
+  // Page variables
+  final TextEditingController _topController = TextEditingController();
+  final TextEditingController _bottomController = TextEditingController();
+  final FocusNode compNode = FocusNode();
+  final FocusNode replNode = FocusNode();
+  var outputList = [];
+  var containerId = 'none';
+  bool _firstRun = true;
+  bool _visible = false;
+
+  @override
+  void initState() {
+    super.initState();
+    compNode.addListener(() {
+      if (outputList.isNotEmpty) {
+        outputList.removeLast();
+      }
+      setState(() {});
+    }); // Resize widget on text form selection
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -649,7 +694,7 @@ class CompilerPage extends StatelessWidget {
               );
             },
           ),
-          title: Text(name),
+          title: Text(widget.name),
           actions: <Widget>[
             IconButton(
               icon: Icon(Icons.stop),
@@ -659,7 +704,60 @@ class CompilerPage extends StatelessWidget {
             IconButton(
               icon: Icon(Icons.save),
               tooltip: 'Save',
-              onPressed: null,
+              onPressed: () async {
+                settingsMap = await SharedPreferences.getInstance();
+                _storage = settingsMap.getString('storage');
+                await showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return StatefulBuilder(
+                          builder: (context, setState) {
+                            _setStorageState = setState;
+                            return AlertDialog(
+                              title: Text('Save as text file'),
+                              content: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Form(
+                                    key: _storageFormKey,
+                                    child: TextFormField(
+                                      autocorrect: false,
+                                      controller: _saveController,
+                                      decoration: InputDecoration.collapsed(
+                                          hintText: 'Your file name'
+                                      ),
+                                      maxLines: 1,
+                                      validator: (value) {
+                                        if (value.isEmpty) {
+                                          return 'Please enter a valid file name';
+                                        }
+                                        return null;
+                                      },
+                                    ),
+                                  ),
+                                  FlatButton(
+                                    child: Text(_storage),
+                                    onPressed: _browseFiles,
+                                  ),
+                                ],
+                              ),
+                              actions: [
+                                FlatButton(
+                                  child: Text(
+                                    'Save',
+                                    style: TextStyle(
+                                      color: Theme.of(context).primaryColor,
+                                    ),
+                                  ),
+                                  onPressed: _saveFile,
+                                ),
+                              ],
+                            );
+                          }
+                      );
+                    }
+                );
+              },
             ),
             IconButton(
               icon: Icon(Icons.settings),
@@ -673,234 +771,273 @@ class CompilerPage extends StatelessWidget {
             ),
           ],
         ),
-        body: CompilerBody(
-          name: name,
-          channel: IOWebSocketChannel.connect(channelName),
-        )
-    );
-  }
-}
-
-class CompilerBody extends StatefulWidget {
-  CompilerBody({Key key, this.name, this.channel}) : super(key: key);
-  final String name;
-  final WebSocketChannel channel;
-
-  @override
-  _CompilerBodyState createState() => _CompilerBodyState();
-}
-
-class _CompilerBodyState extends State<CompilerBody> {
-  final TextEditingController _topController = TextEditingController();
-  final TextEditingController _bottomController = TextEditingController();
-  FocusNode compNode = FocusNode();
-  FocusNode replNode = FocusNode();
-  bool _firstRun = true;
-  bool _visible = false;
-  var outputList = [];
-  var containerId = 'none';
-
-  @override
-  void initState() {
-    super.initState();
-    compNode.addListener(() {
-      if (outputList.isNotEmpty) {
-        outputList.removeLast();
-      }
-      setState(() {});
-    }); // Resize widget on text form selection
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: <Widget>[
-                  RaisedButton(
-                      color: Theme.of(context).primaryColor,
-                      onPressed: null,
-                      child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            Icon(Icons.file_upload),
-                            Padding(
-                                padding: EdgeInsets.all(8.0),
-                                child: Text(
-                                  'Select source file',
-                                  style: TextStyle(fontSize: 12),
-                                ) //Your widget here,
-                            ),
-                          ]
-                      )
-                  ),
-                  RaisedButton(
-                      color: Theme.of(context).primaryColor,
-                      onPressed: _sendRun,
-                      child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            Icon(Icons.play_arrow),
-                            Padding(
-                              padding: EdgeInsets.all(8.0),
-                              child: Text(
-                                'Run',
-                                style: TextStyle(fontSize: 12),
-                              ),
-                            ),
-                          ]
-                      )
-                  ),
-                ]
-            ),
-          ),
-          AnimatedContainer(
-              duration: Duration(milliseconds: 200),
-              margin: EdgeInsets.symmetric(horizontal: 8.0),
-              padding: EdgeInsets.all(8.0),
-              decoration: BoxDecoration(
-                border: Border.all(),
-                borderRadius: BorderRadius.all(Radius.circular(10)),
-              ),
-              constraints: BoxConstraints(
-                minHeight: compNode.hasFocus ? 0.4*usableHeight(context): 96,
-                maxHeight: compNode.hasFocus ? 0.4*usableHeight(context): 96,
-              ),
-              child: Align(
-                  alignment: Alignment.bottomCenter,
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.vertical,
-                    reverse: true,
-                    child: Form(
-                      child: TextFormField(
-                        autofocus: true,
-                        focusNode: compNode,
-                        autocorrect: false,
-                        controller: _topController,
-                        decoration: InputDecoration.collapsed(
-                            hintText: 'Your code here'
-                        ),
-                        maxLines: null,
-                      ),
-                    ),
-                  )
-              )
-          ),
-          AnimatedOpacity(
-            opacity: _visible ? 1.0 : 0.0,
-            duration: Duration(milliseconds: 500),
-            child: Column(
-              children: [
-                  Container(
-                    margin: EdgeInsets.all(8.0),
-                    padding: EdgeInsets.all(8.0),
-                    constraints: BoxConstraints(
-                      minHeight: 0.3*usableHeight(context),
-                      maxHeight: 0.3*usableHeight(context),
-                      minWidth: displayWidth(context),
-                      maxWidth: displayWidth(context),
-                    ),
-                    child: StreamBuilder(
-                      stream: widget.channel.stream,
-                      builder: (context, snapshot) {
-                        if (snapshot.hasData) {
-                          Map<String, dynamic> outputData = jsonDecode(snapshot.data);
-                          if (outputData["containerId"] != null) {
-                            containerId = outputData["containerId"];
-                          }
-                          if (outputData["output"] != null) {
-                            outputList.add(outputData["output"]);
-                          }
-                          //outputList.add(snapshot.data);
-                        }
-                        debugPrint('$outputList');
-                        if (!snapshot.hasData) {
-                          return CircularProgressIndicator();
-                        }
-                        return Align(
-                          alignment: Alignment.topLeft,
-                          child: SingleChildScrollView(
-                            scrollDirection: Axis.vertical,
-                            reverse: true,
-                            child: Container(
-                              constraints: BoxConstraints(
-                                minWidth: displayWidth(context),
-                                maxWidth: displayWidth(context),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: <Widget>[
-                                  for(var item in outputList) Text(item)
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    )
-                  ),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 8.0),
-                    child: Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: <Widget>[
-                          RaisedButton(
-                              color: Theme.of(context).primaryColor,
-                              onPressed: _sendSubmit,
-                              child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                  children: [
-                                    Icon(Icons.play_arrow),
-                                    Padding(
-                                        padding: EdgeInsets.all(8.0),
-                                        child: Text(
-                                          'Submit',
-                                          style: TextStyle(fontSize: 12),
-                                        ) //Your widget here,
-                                    ),
-                                  ]
-                              )
-                          ),
-                        ]
-                    ),
-                  ),
-                  Container(
-                      margin: EdgeInsets.all(8.0),
-                      padding: EdgeInsets.all(8.0),
-                      decoration: BoxDecoration(
-                        border: Border.all(),
-                        borderRadius: BorderRadius.all(Radius.circular(10)),
-                      ),
-                      constraints: BoxConstraints(
-                        minHeight: 0.15*usableHeight(context),
-                        maxHeight: 0.15*usableHeight(context),
-                      ),
-                      child: Align(
-                          alignment: Alignment.bottomCenter,
-                          child: SingleChildScrollView(
-                            scrollDirection: Axis.vertical,
-                            reverse: true,
-                            child: Form(
-                              child: TextFormField(
-                                autocorrect: false,
-                                controller: _bottomController,
-                                decoration: InputDecoration.collapsed(
-                                    hintText: 'Your code here'
+        body: ListView(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      RaisedButton(
+                          color: Theme.of(context).primaryColor,
+                          onPressed: () async {
+                            settingsMap = await SharedPreferences.getInstance();
+                            _storage = settingsMap.getString('storage');
+                            await showDialog(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return StatefulBuilder(
+                                      builder: (context, setState) {
+                                        _setLoadState = setState;
+                                        return AlertDialog(
+                                          title: Text('Choose file'),
+                                          content: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              FlatButton(
+                                                child: Text(_fileToOpen),
+                                                onPressed: _browseTxts,
+                                              ),
+                                            ],
+                                          ),
+                                          actions: [
+                                            FlatButton(
+                                              child: Text(
+                                                'Open',
+                                                style: TextStyle(
+                                                  color: Theme.of(context).primaryColor,
+                                                ),
+                                              ),
+                                              onPressed: _loadFile,
+                                            ),
+                                          ],
+                                        );
+                                      }
+                                  );
+                                }
+                            );
+                          },
+                          child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: [
+                                Icon(Icons.file_upload),
+                                Padding(
+                                    padding: EdgeInsets.all(8.0),
+                                    child: Text(
+                                      'Select source file',
+                                      style: TextStyle(fontSize: 12),
+                                    ) //Your widget here,
                                 ),
-                                maxLines: null,
-                              ),
-                            ),
+                              ]
                           )
+                      ),
+                      RaisedButton(
+                          color: Theme.of(context).primaryColor,
+                          onPressed: _sendRun,
+                          child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: [
+                                Icon(Icons.play_arrow),
+                                Padding(
+                                  padding: EdgeInsets.all(8.0),
+                                  child: Text(
+                                    'Run',
+                                    style: TextStyle(fontSize: 12),
+                                  ),
+                                ),
+                              ]
+                          )
+                      ),
+                    ]
+                ),
+              ),
+              AnimatedContainer(
+                  duration: Duration(milliseconds: 200),
+                  margin: EdgeInsets.symmetric(horizontal: 8.0),
+                  padding: EdgeInsets.all(8.0),
+                  decoration: BoxDecoration(
+                    border: Border.all(),
+                    borderRadius: BorderRadius.all(Radius.circular(10)),
+                  ),
+                  constraints: BoxConstraints(
+                    minHeight: compNode.hasFocus ? 0.4*usableHeight(context): 96,
+                    maxHeight: compNode.hasFocus ? 0.4*usableHeight(context): 96,
+                  ),
+                  child: Align(
+                      alignment: Alignment.bottomCenter,
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.vertical,
+                        reverse: true,
+                        child: Form(
+                          child: TextFormField(
+                            autofocus: true,
+                            focusNode: compNode,
+                            autocorrect: false,
+                            controller: _topController,
+                            decoration: InputDecoration.collapsed(
+                                hintText: 'Your code here'
+                            ),
+                            maxLines: null,
+                          ),
+                        ),
                       )
                   )
-              ]
-            )
-          ),
-        ]
+              ),
+              AnimatedOpacity(
+                  opacity: _visible ? 1.0 : 0.0,
+                  duration: Duration(milliseconds: 500),
+                  child: Column(
+                      children: [
+                        Container(
+                            margin: EdgeInsets.all(8.0),
+                            padding: EdgeInsets.all(8.0),
+                            constraints: BoxConstraints(
+                              minHeight: 0.3*usableHeight(context),
+                              maxHeight: 0.3*usableHeight(context),
+                              minWidth: displayWidth(context),
+                              maxWidth: displayWidth(context),
+                            ),
+                            child: StreamBuilder(
+                              stream: widget.channel.stream,
+                              builder: (context, snapshot) {
+                                if (snapshot.hasData) {
+                                  Map<String, dynamic> outputData = jsonDecode(snapshot.data);
+                                  if (outputData["containerId"] != null) {
+                                    containerId = outputData["containerId"];
+                                  }
+                                  if (outputData["output"] != null) {
+                                    outputList.add(outputData["output"]);
+                                  }
+                                  //outputList.add(snapshot.data);
+                                }
+                                debugPrint('$outputList');
+                                if (!snapshot.hasData) {
+                                  return CircularProgressIndicator();
+                                }
+                                return Align(
+                                  alignment: Alignment.topLeft,
+                                  child: SingleChildScrollView(
+                                    scrollDirection: Axis.vertical,
+                                    reverse: true,
+                                    child: Container(
+                                      constraints: BoxConstraints(
+                                        minWidth: displayWidth(context),
+                                        maxWidth: displayWidth(context),
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: <Widget>[
+                                          for(var item in outputList) Text(item)
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            )
+                        ),
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 8.0),
+                          child: Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: <Widget>[
+                                RaisedButton(
+                                    color: Theme.of(context).primaryColor,
+                                    onPressed: _sendSubmit,
+                                    child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                        children: [
+                                          Icon(Icons.play_arrow),
+                                          Padding(
+                                              padding: EdgeInsets.all(8.0),
+                                              child: Text(
+                                                'Submit',
+                                                style: TextStyle(fontSize: 12),
+                                              ) //Your widget here,
+                                          ),
+                                        ]
+                                    )
+                                ),
+                              ]
+                          ),
+                        ),
+                        Container(
+                            margin: EdgeInsets.all(8.0),
+                            padding: EdgeInsets.all(8.0),
+                            decoration: BoxDecoration(
+                              border: Border.all(),
+                              borderRadius: BorderRadius.all(Radius.circular(10)),
+                            ),
+                            constraints: BoxConstraints(
+                              minHeight: 0.15*usableHeight(context),
+                              maxHeight: 0.15*usableHeight(context),
+                            ),
+                            child: Align(
+                                alignment: Alignment.bottomCenter,
+                                child: SingleChildScrollView(
+                                  scrollDirection: Axis.vertical,
+                                  reverse: true,
+                                  child: Form(
+                                    child: TextFormField(
+                                      autocorrect: false,
+                                      controller: _bottomController,
+                                      decoration: InputDecoration.collapsed(
+                                          hintText: 'Your code here'
+                                      ),
+                                      maxLines: null,
+                                    ),
+                                  ),
+                                )
+                            )
+                        )
+                      ]
+                  )
+              ),
+            ]
+        ),
     );
+  }
+
+  void _browseFiles() async {
+    _storage = await FilePicker.getDirectoryPath() ?? _storage;
+    _setStorageState(() {});
+  }
+
+  void _saveFile() async {
+    Permission.storage.request();
+    if (await Permission.storage.request().isGranted) {
+      if (_storageFormKey.currentState.validate()) {
+        String fileName = _saveController.text;
+        File file = File('$_storage/$fileName.txt');
+        file.writeAsString(_topController.text);
+
+        _saveController.clear();
+
+        if (_storage != settingsMap.getString('storage')) {
+          settingsMap.remove('storage');
+          settingsMap.setString('storage', _storage);
+        }
+
+        Navigator.pop(context);
+      }
+    }
+  }
+
+  void _browseTxts() async {
+    File file = await FilePicker.getFile(type: FileType.custom, allowedExtensions: ['txt']);
+    _fileToOpen = file.path ?? _fileToOpen;
+    _setLoadState(() {});
+  }
+
+  void _loadFile() async {
+    if (_fileToOpen != 'Browse files') {
+      try {
+        File file = await File(_fileToOpen);
+        String contents = await file.readAsString();
+        _topController.text = contents;
+      } catch (e) {}
+      Navigator.pop(context);
+    }
   }
 
   void _sendRun() {
