@@ -351,11 +351,14 @@ class _ReplPageState extends State<ReplPage> {
   final FocusNode replNode = FocusNode();
   var outputList = [];
   var containerId = 'none';
+  bool _connected = false;
+  StateSetter _setStreamState;
 
   @override
   void initState() {
     super.initState();
     _initRepl();
+    _listenToStream();
     widget.channel.sink.add(
         json.encode(
             {
@@ -370,6 +373,28 @@ class _ReplPageState extends State<ReplPage> {
   void _initRepl() async {
     settingsMap = await SharedPreferences.getInstance();
     _storage = settingsMap.getString('storage');
+  }
+
+  void _listenToStream() {
+    widget.channel.stream.listen((snapshot) {
+      if (snapshot != null) {
+        Map<String, dynamic> outputData = jsonDecode(snapshot);
+        if (outputData["containerId"] != null) {
+          containerId = outputData["containerId"];
+        }
+        if (outputData["output"] != null) {
+          if (outputData["output"].substring(0, 4) == '>>> ') {
+            outputList.add(outputData["output"].substring(4));
+          } else {
+            outputList.add(outputData["output"]);
+          }
+        }
+        _connected = true;
+        _setStreamState(() {});
+      } else {
+        //_connected = false;
+      }
+    });
   }
 
   @override
@@ -474,46 +499,34 @@ class _ReplPageState extends State<ReplPage> {
                     minWidth: displayWidth(context),
                     maxWidth: displayWidth(context),
                   ),
-                  child: StreamBuilder(
-                    stream: widget.channel.stream,
-                    builder: (context, snapshot) {
-                      if (snapshot.hasData) {
-                        Map<String, dynamic> outputData = jsonDecode(snapshot.data);
-                        if (outputData["containerId"] != null) {
-                          containerId = outputData["containerId"];
-                        }
-                        if (outputData["output"] != null) {
-                          if (outputData["output"].substring(0,4) == '>>> ') {
-                            outputList.add(outputData["output"].substring(4));
-                          } else {
-                            outputList.add(outputData["output"]);
-                          }
-                        }
-                      }
+                  child: StatefulBuilder(
+                    builder: (context, setState) {
+                      _setStreamState = setState;
                       debugPrint('$outputList');
-                      if (!snapshot.hasData) {
-                        return CircularProgressIndicator();
-                      }
-                      return Align(
-                        alignment: Alignment.topLeft,
-                        child: SingleChildScrollView(
-                          scrollDirection: Axis.vertical,
-                          reverse: true,
-                          child: Container(
-                            constraints: BoxConstraints(
-                              minWidth: displayWidth(context),
-                              maxWidth: displayWidth(context),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: <Widget>[
-                                for(var item in outputList) Text(item)
-                              ],
+                      if (_connected) {
+                        return Align(
+                          alignment: Alignment.topLeft,
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.vertical,
+                            reverse: true,
+                            child: Container(
+                              constraints: BoxConstraints(
+                                minWidth: displayWidth(context),
+                                maxWidth: displayWidth(context),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: <Widget>[
+                                  for(var item in outputList) Text(item)
+                                ],
+                              ),
                             ),
                           ),
-                        ),
-                      );
-                    },
+                        );
+                      } else {
+                        return CircularProgressIndicator();
+                      }
+                    }
                   )
               ),
               Padding(
@@ -532,7 +545,7 @@ class _ReplPageState extends State<ReplPage> {
                                     padding: EdgeInsets.all(8.0),
                                     child: Text(
                                       'Submit',
-                                      style: TextStyle(fontSize: 12),
+                                      style: TextStyle(fontSize: 16),
                                     ) //Your widget here,
                                 ),
                               ]
@@ -666,18 +679,36 @@ class _CompilerPageState extends State<CompilerPage> {
   final FocusNode replNode = FocusNode();
   var outputList = [];
   var containerId = 'none';
+  bool _connected = false;
   bool _firstRun = true;
   bool _visible = false;
+  StateSetter _setStreamState;
 
   @override
   void initState() {
     super.initState();
+    _listenToStream();
     compNode.addListener(() {
-      if (outputList.isNotEmpty) {
-        outputList.removeLast();
-      }
       setState(() {});
     }); // Resize widget on text form selection
+  }
+
+  void _listenToStream() {
+    widget.channel.stream.listen((snapshot) {
+      if (snapshot != null) {
+        Map<String, dynamic> outputData = jsonDecode(snapshot);
+        if (outputData["containerId"] != null) {
+          containerId = outputData["containerId"];
+        }
+        if (outputData["output"] != null) {
+          outputList.add(outputData["output"]);
+        }
+        _connected = true;
+        _setStreamState(() {});
+      } else {
+        _connected = false;
+      }
+    });
   }
 
   @override
@@ -820,12 +851,12 @@ class _CompilerPageState extends State<CompilerPage> {
                           child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceAround,
                               children: [
-                                Icon(Icons.file_upload),
+                                Icon(Icons.folder_open),
                                 Padding(
                                     padding: EdgeInsets.all(8.0),
                                     child: Text(
-                                      'Select source file',
-                                      style: TextStyle(fontSize: 12),
+                                      'Open file',
+                                      style: TextStyle(fontSize: 16),
                                     ) //Your widget here,
                                 ),
                               ]
@@ -842,7 +873,7 @@ class _CompilerPageState extends State<CompilerPage> {
                                   padding: EdgeInsets.all(8.0),
                                   child: Text(
                                     'Run',
-                                    style: TextStyle(fontSize: 12),
+                                    style: TextStyle(fontSize: 16),
                                   ),
                                 ),
                               ]
@@ -897,10 +928,10 @@ class _CompilerPageState extends State<CompilerPage> {
                               minWidth: displayWidth(context),
                               maxWidth: displayWidth(context),
                             ),
-                            child: StreamBuilder(
-                              stream: widget.channel.stream,
-                              builder: (context, snapshot) {
-                                if (snapshot.hasData) {
+                            child: StatefulBuilder(
+                              builder: (context, setState) {
+                                _setStreamState = setState;
+                                /*if (snapshot.hasData) {
                                   Map<String, dynamic> outputData = jsonDecode(snapshot.data);
                                   if (outputData["containerId"] != null) {
                                     containerId = outputData["containerId"];
@@ -909,30 +940,33 @@ class _CompilerPageState extends State<CompilerPage> {
                                     outputList.add(outputData["output"]);
                                   }
                                   //outputList.add(snapshot.data);
-                                }
+                                }*/
                                 debugPrint('$outputList');
-                                if (!snapshot.hasData) {
-                                  return CircularProgressIndicator();
-                                }
-                                return Align(
-                                  alignment: Alignment.topLeft,
-                                  child: SingleChildScrollView(
-                                    scrollDirection: Axis.vertical,
-                                    reverse: true,
-                                    child: Container(
-                                      constraints: BoxConstraints(
-                                        minWidth: displayWidth(context),
-                                        maxWidth: displayWidth(context),
-                                      ),
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: <Widget>[
-                                          for(var item in outputList) Text(item)
-                                        ],
+                                if (_connected) {
+                                  return Align(
+                                    alignment: Alignment.topLeft,
+                                    child: SingleChildScrollView(
+                                      scrollDirection: Axis.vertical,
+                                      reverse: true,
+                                      child: Container(
+                                        constraints: BoxConstraints(
+                                          minWidth: displayWidth(context),
+                                          maxWidth: displayWidth(context),
+                                        ),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment
+                                              .start,
+                                          children: <Widget>[
+                                            for(var item in outputList) Text(
+                                                item)
+                                          ],
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                );
+                                  );
+                                } else {
+                                  return CircularProgressIndicator();
+                                }
                               },
                             )
                         ),
@@ -947,12 +981,12 @@ class _CompilerPageState extends State<CompilerPage> {
                                     child: Row(
                                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                                         children: [
-                                          Icon(Icons.play_arrow),
+                                          Icon(Icons.keyboard_arrow_right),
                                           Padding(
                                               padding: EdgeInsets.all(8.0),
                                               child: Text(
                                                 'Submit',
-                                                style: TextStyle(fontSize: 12),
+                                                style: TextStyle(fontSize: 16),
                                               ) //Your widget here,
                                           ),
                                         ]
@@ -982,7 +1016,7 @@ class _CompilerPageState extends State<CompilerPage> {
                                       autocorrect: false,
                                       controller: _bottomController,
                                       decoration: InputDecoration.collapsed(
-                                          hintText: 'Your code here'
+                                          hintText: 'Provide standard input here'
                                       ),
                                       maxLines: null,
                                     ),
