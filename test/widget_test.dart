@@ -28,5 +28,40 @@ void main() {
     expect(find.byType(LangBox), findsNWidgets(4));
 
   });
+
+  testWidgets('Language Box', (WidgetTester tester) async {
+    await tester.pumpWidget(wrapWidget(widget: LangBox(
+      name: "C",
+      image: 'c.png',
+    )));
+
+    // There should be one main widget
+    expect(find.byType(LangBox), findsOneWidget);
+
+    // There should be one button
+    expect(find.byType(RaisedButton), findsOneWidget);
+
+    // There should be one label with the language name
+    expect(find.text("C"), findsOneWidget);
+
+  });
+
+  testWidgets('REPL/Compile Select Page', (WidgetTester tester) async {
+    await tester.pumpWidget(wrapWidget(widget: RCSelectPage(name: "Java")));
+
+    // There should be one main widget
+    expect(find.byType(RCSelectPage), findsOneWidget);
+
+    // There should be one app bar
+    expect(find.byType(AppBar), findsOneWidget);
+
+    // There should be two mode options
+    expect(find.byType(RaisedButton), findsNWidgets(2));
+
+    // There should be one label for each execution mode
+    expect(find.text("REPL"), findsOneWidget);
+    expect(find.text("Compile"), findsOneWidget);
+
+  });
   
 }
