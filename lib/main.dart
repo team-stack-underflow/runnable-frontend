@@ -191,7 +191,7 @@ class LangBox extends StatelessWidget {
                 name,
                 style: TextStyle(fontSize: 20),
               ) //Your widget here,
-              ),
+          ),
         ),
       ]));
   }
@@ -202,8 +202,8 @@ class LangBox extends StatelessWidget {
 class RCSelectPage extends StatelessWidget {
   RCSelectPage({Key key, this.name}) : super(key: key);
   final String name;
-  //final String channelName = 'wss://echo.websocket.org'; // For testing websocket
-  final String channelName = 'wss://s4tdw93cwd.execute-api.us-east-1.amazonaws.com/default/';
+  //static const String channelName = 'wss://echo.websocket.org'; // For testing websocket
+  static const String channelName = 'wss://s4tdw93cwd.execute-api.us-east-1.amazonaws.com/default/';
 
   @override
   Widget build(BuildContext context) {
@@ -338,15 +338,15 @@ class _ReplPageState extends State<ReplPage> {
   // Variables for storage settings
   final TextEditingController _saveController = TextEditingController();
   final _storageFormKey = GlobalKey<FormState>();
-  var _storage = 'Loading';
+  String _storage = 'Loading';
   StateSetter _setStorageState;
   SharedPreferences settingsMap;
 
   // Page variables
   final TextEditingController _controller = TextEditingController();
   final FocusNode replNode = FocusNode();
-  var outputList = [];
-  var containerId = 'none';
+  List outputList = [];
+  String containerId = 'none';
   bool _connected = false;
   StateSetter _setStreamState;
 
@@ -375,14 +375,20 @@ class _ReplPageState extends State<ReplPage> {
     widget.channel.stream.listen((snapshot) {
       if (snapshot != null) {
         Map<String, dynamic> outputData = jsonDecode(snapshot);
-        if (outputData["containerId"] != null) {
-          containerId = outputData["containerId"];
+        if (containerId == 'none') {
+          if (outputData["output"] == null) {
+            if (outputData["containerId"] != null) {
+              containerId = outputData["containerId"];
+            }
+          }
         }
-        if (outputData["output"] != null) {
-          if (outputData["output"].substring(0, 4) == '>>> ') {
-            outputList.add(outputData["output"].substring(4));
-          } else {
-            outputList.add(outputData["output"]);
+        if (containerId == outputData['containerId']) {
+          if (outputData["output"] != null) {
+            if (outputData["output"].substring(0, 4) == '>>> ') {
+              outputList.add(outputData["output"].substring(4));
+            } else {
+              outputList.add(outputData["output"]);
+            }
           }
         }
         _connected = true;
@@ -412,7 +418,7 @@ class _ReplPageState extends State<ReplPage> {
             IconButton(
               icon: Icon(Icons.refresh),
               tooltip: 'Restart',
-              onPressed: null,
+              onPressed: _restart,
             ),
             IconButton(
               icon: Icon(Icons.save),
@@ -439,7 +445,7 @@ class _ReplPageState extends State<ReplPage> {
                                       decoration: InputDecoration(
                                           hintText: 'Your file name',
                                         border: OutlineInputBorder(),
-                                        contentPadding: EdgeInsets.symmetric(horizontal: 8.0),
+                                        contentPadding: const EdgeInsets.symmetric(horizontal: 8.0),
                                       ),
                                       maxLines: 1,
                                       validator: (value) {
@@ -492,8 +498,8 @@ class _ReplPageState extends State<ReplPage> {
         body: ListView(
             children: [
               Container(
-                  margin: EdgeInsets.all(8.0),
-                  padding: EdgeInsets.all(8.0),
+                  margin: const EdgeInsets.all(8.0),
+                  padding: const EdgeInsets.all(8.0),
                   constraints: BoxConstraints(
                     minHeight: 0.3*usableHeight(context),
                     maxHeight: 0.3*usableHeight(context),
@@ -531,7 +537,7 @@ class _ReplPageState extends State<ReplPage> {
                   )
               ),
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 8.0),
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
                 child: Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: <Widget>[
@@ -543,7 +549,7 @@ class _ReplPageState extends State<ReplPage> {
                               children: [
                                 Icon(Icons.play_arrow),
                                 Padding(
-                                    padding: EdgeInsets.all(8.0),
+                                    padding: const EdgeInsets.all(8.0),
                                     child: Text(
                                       'Submit',
                                       style: TextStyle(fontSize: 16),
@@ -556,8 +562,8 @@ class _ReplPageState extends State<ReplPage> {
                 ),
               ),
               Container(
-                  margin: EdgeInsets.all(8.0),
-                  padding: EdgeInsets.all(8.0),
+                  margin: const EdgeInsets.all(8.0),
+                  padding: const EdgeInsets.all(8.0),
                   decoration: BoxDecoration(
                     border: Border.all(),
                     borderRadius: BorderRadius.all(Radius.circular(10)),
@@ -588,6 +594,21 @@ class _ReplPageState extends State<ReplPage> {
               )
             ]
         ),
+    );
+  }
+
+  void _restart() {
+    containerId = 'none';
+    outputList = [];
+    _setStreamState(() {});
+    widget.channel.sink.add(
+        json.encode(
+            {
+              "action" : "launch",
+              "lang" : widget.name.toLowerCase(),
+              "mode" : "repl",
+            }
+        )
     );
   }
 
@@ -628,6 +649,7 @@ class _ReplPageState extends State<ReplPage> {
           json.encode(
               {"action": "input",
                 "input": _controller.text,
+                "containerId": containerId,
               }
           )
       );
@@ -659,8 +681,8 @@ class _CompilerPageState extends State<CompilerPage> {
   // Variables for storage settings
   final TextEditingController _saveController = TextEditingController();
   final _storageFormKey = GlobalKey<FormState>();
-  var _storage = 'Loading';
-  var _fileToOpen = 'Browse files';
+  String _storage = 'Loading';
+  String _fileToOpen = 'Browse files';
   StateSetter _setStorageState;
   StateSetter _setLoadState;
   SharedPreferences settingsMap;
@@ -672,8 +694,8 @@ class _CompilerPageState extends State<CompilerPage> {
   final TextEditingController _topController = TextEditingController();
   final TextEditingController _bottomController = TextEditingController();
   final FocusNode compNode = FocusNode();
-  var outputList = [];
-  var containerId = 'none';
+  List outputList = [];
+  String containerId = 'none';
   bool _connected = false;
   bool _firstRun = true;
   bool _visible = false;
@@ -703,11 +725,17 @@ class _CompilerPageState extends State<CompilerPage> {
     widget.channel.stream.listen((snapshot) {
       if (snapshot != null) {
         Map<String, dynamic> outputData = jsonDecode(snapshot);
-        if (outputData["containerId"] != null) {
-          containerId = outputData["containerId"];
+        if (containerId == 'none') {
+          if (outputData["output"] == null) {
+            if (outputData["containerId"] != null) {
+              containerId = outputData["containerId"];
+            }
+          }
         }
-        if (outputData["output"] != null) {
-          outputList.add(outputData["output"]);
+        if (containerId == outputData['containerId']) {
+          if (outputData["output"] != null) {
+            outputList.add(outputData["output"]);
+          }
         }
         _connected = true;
         _setStreamState(() {});
@@ -763,7 +791,7 @@ class _CompilerPageState extends State<CompilerPage> {
                                       decoration: InputDecoration(
                                           hintText: 'Your file name',
                                           border: OutlineInputBorder(),
-                                          contentPadding: EdgeInsets.symmetric(horizontal: 8.0),
+                                          contentPadding: const EdgeInsets.symmetric(horizontal: 8.0),
                                       ),
                                       maxLines: 1,
                                       validator: (value) {
@@ -864,7 +892,7 @@ class _CompilerPageState extends State<CompilerPage> {
                               children: [
                                 Icon(Icons.folder_open),
                                 Padding(
-                                    padding: EdgeInsets.all(8.0),
+                                    padding: const EdgeInsets.all(8.0),
                                     child: Text(
                                       'Open file',
                                       style: TextStyle(fontSize: 16),
@@ -881,7 +909,7 @@ class _CompilerPageState extends State<CompilerPage> {
                               children: [
                                 Icon(Icons.play_arrow),
                                 Padding(
-                                  padding: EdgeInsets.all(8.0),
+                                  padding: const EdgeInsets.all(8.0),
                                   child: Text(
                                     'Run',
                                     style: TextStyle(fontSize: 16),
@@ -895,8 +923,8 @@ class _CompilerPageState extends State<CompilerPage> {
               ),
               AnimatedContainer(
                   duration: Duration(milliseconds: 200),
-                  margin: EdgeInsets.symmetric(horizontal: 8.0),
-                  padding: EdgeInsets.all(8.0),
+                  margin: const EdgeInsets.symmetric(horizontal: 8.0),
+                  padding: const EdgeInsets.all(8.0),
                   decoration: BoxDecoration(
                     border: Border.all(),
                     borderRadius: BorderRadius.all(Radius.circular(10)),
@@ -931,8 +959,8 @@ class _CompilerPageState extends State<CompilerPage> {
                   child: Column(
                       children: [
                         Container(
-                            margin: EdgeInsets.all(8.0),
-                            padding: EdgeInsets.all(8.0),
+                            margin: const EdgeInsets.all(8.0),
+                            padding: const EdgeInsets.all(8.0),
                             constraints: BoxConstraints(
                               minHeight: 0.3*usableHeight(context),
                               maxHeight: 0.3*usableHeight(context),
@@ -982,7 +1010,7 @@ class _CompilerPageState extends State<CompilerPage> {
                             )
                         ),
                         Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 8.0),
+                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
                           child: Row(
                               mainAxisAlignment: MainAxisAlignment.end,
                               children: <Widget>[
@@ -994,7 +1022,7 @@ class _CompilerPageState extends State<CompilerPage> {
                                         children: [
                                           Icon(Icons.keyboard_arrow_right),
                                           Padding(
-                                              padding: EdgeInsets.all(8.0),
+                                              padding: const EdgeInsets.all(8.0),
                                               child: Text(
                                                 'Submit',
                                                 style: TextStyle(fontSize: 16),
@@ -1007,8 +1035,8 @@ class _CompilerPageState extends State<CompilerPage> {
                           ),
                         ),
                         Container(
-                            margin: EdgeInsets.all(8.0),
-                            padding: EdgeInsets.all(8.0),
+                            margin: const EdgeInsets.all(8.0),
+                            padding: const EdgeInsets.all(8.0),
                             decoration: BoxDecoration(
                               border: Border.all(),
                               borderRadius: BorderRadius.all(Radius.circular(10)),
@@ -1113,6 +1141,9 @@ class _CompilerPageState extends State<CompilerPage> {
         _firstRun = false;
       }
       else {
+        containerId = 'none';
+        outputList = [];
+        _setStreamState(() {});
         widget.channel.sink.add(
             json.encode(
                 {
@@ -1138,6 +1169,7 @@ class _CompilerPageState extends State<CompilerPage> {
               }
           )
       );
+      containerId = 'none';
     }
   }
 
@@ -1148,6 +1180,7 @@ class _CompilerPageState extends State<CompilerPage> {
           json.encode(
               {"action": "input",
                 "input": _bottomController.text,
+                "containerId": containerId,
               }
           )
       );
