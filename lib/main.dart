@@ -687,6 +687,11 @@ class _CompilerPageState extends State<CompilerPage> {
     compNode.addListener(() {
       setState(() {});
     }); // Resize widget on text form selection
+    if (widget.name == 'C') {
+      _topController.text = '#include <stdio.h>\nint main(void){\n    \n    return 0;\n}';
+    } else if (widget.name == 'Java') {
+      _topController.text = 'public class Program {\n    public static void main(String[] args) {\n        \n    }\n}';
+    }
   }
 
  /* void _listenForPermissionStatus() async {
