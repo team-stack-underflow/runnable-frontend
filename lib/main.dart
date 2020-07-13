@@ -37,17 +37,11 @@ class _SplashScreenState extends State<SplashScreen> {
   void initState() {
     super.initState();
     _initSettings();
-    Timer(
-        Duration(seconds: 2),
-        () => Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (BuildContext context) => RunnableHome())
-        )
-    );
   }
 
   Future _initSettings() async {
     SharedPreferences settingsMap = await SharedPreferences.getInstance();
-
+    await Permission.storage.request();
     var storage = settingsMap.getString('storage') ?? 'Does not exist';
     if (storage == 'Does not exist') {
       final directory = await getApplicationDocumentsDirectory();
@@ -56,13 +50,15 @@ class _SplashScreenState extends State<SplashScreen> {
       if(await storageLocation.exists()) {
         storagePath = storageLocation.path;
       } else {
-        storageLocation.create(recursive: true)
-            .then((Directory storageLocation) {
-          storagePath = storageLocation.path;
-        });
+        storageLocation.create(recursive: true);
+        storagePath = storageLocation.path;
       }
       settingsMap.setString('storage', storagePath);
     }
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => RunnableHome()),
+    );
   }
 
   @override
@@ -414,8 +410,8 @@ class _ReplPageState extends State<ReplPage> {
           title: Text(widget.name),
           actions: <Widget>[
             IconButton(
-              icon: Icon(Icons.stop),
-              tooltip: 'Stop',
+              icon: Icon(Icons.refresh),
+              tooltip: 'Restart',
               onPressed: null,
             ),
             IconButton(
@@ -440,8 +436,10 @@ class _ReplPageState extends State<ReplPage> {
                                     child: TextFormField(
                                       autocorrect: false,
                                       controller: _saveController,
-                                      decoration: InputDecoration.collapsed(
-                                          hintText: 'Your file name'
+                                      decoration: InputDecoration(
+                                          hintText: 'Your file name',
+                                        border: OutlineInputBorder(),
+                                        contentPadding: EdgeInsets.symmetric(horizontal: 8.0),
                                       ),
                                       maxLines: 1,
                                       validator: (value) {
@@ -452,9 +450,12 @@ class _ReplPageState extends State<ReplPage> {
                                       },
                                     ),
                                   ),
-                                  FlatButton(
-                                    child: Text(_storage),
-                                    onPressed: _browseFiles,
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 8.0),
+                                    child: RaisedButton(
+                                      child: Text(_storage),
+                                      onPressed: _browseFiles,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -462,9 +463,9 @@ class _ReplPageState extends State<ReplPage> {
                                 FlatButton(
                                   child: Text(
                                     'Save',
-                                    style: TextStyle(
+                                    /*style: TextStyle(
                                       color: Theme.of(context).primaryColor,
-                                    ),
+                                    ),*/
                                   ),
                                   onPressed: _saveFile,
                                 ),
@@ -596,15 +597,7 @@ class _ReplPageState extends State<ReplPage> {
   }
 
   void _saveFile() async {
-/*    PermissionStatus status = await Permission.storage.status;
-    if (status.isUndetermined) {
-      // You can request multiple permissions at once.
-      Map<Permission, PermissionStatus> statuses = await [
-        Permission.storage,
-      ].request();
-      print(statuses[Permission.storage]); // it should print PermissionStatus.granted
-    }*/
-    Permission.storage.request();
+    await Permission.storage.request();
     if (await Permission.storage.request().isGranted) {
       if (_storageFormKey.currentState.validate()) {
         String fileName = _saveController.text;
@@ -671,12 +664,14 @@ class _CompilerPageState extends State<CompilerPage> {
   StateSetter _setStorageState;
   StateSetter _setLoadState;
   SharedPreferences settingsMap;
+/*final Permission _storagePermission = Permission.storage;
+  PermissionStatus _permissionStatus = PermissionStatus.undetermined;
+*/
 
   // Page variables
   final TextEditingController _topController = TextEditingController();
   final TextEditingController _bottomController = TextEditingController();
   final FocusNode compNode = FocusNode();
-  final FocusNode replNode = FocusNode();
   var outputList = [];
   var containerId = 'none';
   bool _connected = false;
@@ -687,11 +682,17 @@ class _CompilerPageState extends State<CompilerPage> {
   @override
   void initState() {
     super.initState();
+    //_listenForPermissionStatus();
     _listenToStream();
     compNode.addListener(() {
       setState(() {});
     }); // Resize widget on text form selection
   }
+
+ /* void _listenForPermissionStatus() async {
+    final status = await _storagePermission.status;
+    setState(() => _permissionStatus = status);
+  }*/
 
   void _listenToStream() {
     widget.channel.stream.listen((snapshot) {
@@ -730,7 +731,7 @@ class _CompilerPageState extends State<CompilerPage> {
             IconButton(
               icon: Icon(Icons.stop),
               tooltip: 'Stop',
-              onPressed: null,
+              onPressed: _sendStop,
             ),
             IconButton(
               icon: Icon(Icons.save),
@@ -754,8 +755,10 @@ class _CompilerPageState extends State<CompilerPage> {
                                     child: TextFormField(
                                       autocorrect: false,
                                       controller: _saveController,
-                                      decoration: InputDecoration.collapsed(
-                                          hintText: 'Your file name'
+                                      decoration: InputDecoration(
+                                          hintText: 'Your file name',
+                                          border: OutlineInputBorder(),
+                                          contentPadding: EdgeInsets.symmetric(horizontal: 8.0),
                                       ),
                                       maxLines: 1,
                                       validator: (value) {
@@ -766,9 +769,12 @@ class _CompilerPageState extends State<CompilerPage> {
                                       },
                                     ),
                                   ),
-                                  FlatButton(
-                                    child: Text(_storage),
-                                    onPressed: _browseFiles,
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 8.0),
+                                    child: RaisedButton(
+                                      child: Text(_storage),
+                                      onPressed: _browseFiles,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -776,9 +782,9 @@ class _CompilerPageState extends State<CompilerPage> {
                                 FlatButton(
                                   child: Text(
                                     'Save',
-                                    style: TextStyle(
+                                    /*style: TextStyle(
                                       color: Theme.of(context).primaryColor,
-                                    ),
+                                    ),*/
                                   ),
                                   onPressed: _saveFile,
                                 ),
@@ -825,7 +831,7 @@ class _CompilerPageState extends State<CompilerPage> {
                                           content: Column(
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
-                                              FlatButton(
+                                              RaisedButton(
                                                 child: Text(_fileToOpen),
                                                 onPressed: _browseTxts,
                                               ),
@@ -835,9 +841,9 @@ class _CompilerPageState extends State<CompilerPage> {
                                             FlatButton(
                                               child: Text(
                                                 'Open',
-                                                style: TextStyle(
+                                                /*style: TextStyle(
                                                   color: Theme.of(context).primaryColor,
-                                                ),
+                                                ),*/
                                               ),
                                               onPressed: _loadFile,
                                             ),
@@ -1032,13 +1038,21 @@ class _CompilerPageState extends State<CompilerPage> {
     );
   }
 
+/*  Future<bool> requestPermission(Permission permission) async {
+    final status = await permission.request();
+
+    setState(() {
+      _permissionStatus = status;
+    });
+  }*/
+
   void _browseFiles() async {
     _storage = await FilePicker.getDirectoryPath() ?? _storage;
     _setStorageState(() {});
   }
 
   void _saveFile() async {
-    Permission.storage.request();
+    await Permission.storage.request();
     if (await Permission.storage.request().isGranted) {
       if (_storageFormKey.currentState.validate()) {
         String fileName = _saveController.text;
@@ -1065,10 +1079,10 @@ class _CompilerPageState extends State<CompilerPage> {
 
   void _loadFile() async {
     if (_fileToOpen != 'Browse files') {
-      Permission.storage.request();
+      await Permission.storage.request();
       if (await Permission.storage.request().isGranted) {
         try {
-          File file = await File(_fileToOpen);
+          File file = File(_fileToOpen);
           String contents = await file.readAsString();
           _topController.text = contents;
         } catch (e) {}
@@ -1106,6 +1120,19 @@ class _CompilerPageState extends State<CompilerPage> {
         );
       }
       compNode.unfocus();
+    }
+  }
+
+  void _sendStop() {
+    if (containerId != 'none') {
+      widget.channel.sink.add(
+          json.encode(
+              {
+                "action": "stop",
+                "containerId": containerId,
+              }
+          )
+      );
     }
   }
 
