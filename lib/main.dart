@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:flutter_launcher_icons/main.dart';
 import 'sizes_helpers.dart';
 import 'dart:convert';
 import 'dart:async';
@@ -81,10 +82,12 @@ class RunnableHome extends StatelessWidget {
     // Scaffold is a layout for the major Material Components.
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: Icon(Icons.home),
-          tooltip: 'Home',
-          onPressed: null
+        leading: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Image.asset(
+              'assets/runnableicon.png',
+              fit: BoxFit.contain,
+          ),
         ),
         title: Text('Runnable'),
         actions: <Widget>[
@@ -542,9 +545,27 @@ class _ReplPageState extends State<ReplPage> {
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: <Widget>[
                       RaisedButton(
-                          color: Theme.of(context).primaryColor,
+                          color: Color(0xff424242),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8.0),
+                              side: BorderSide(color: Theme.of(context).primaryColor)
+                          ),
                           onPressed: _sendSubmit,
-                          child: Row(
+                          child: Container(
+                            constraints: BoxConstraints(
+                              minHeight: 36,
+                              maxHeight: 36,
+                              minWidth: 88,
+                              maxWidth: 88,
+                            ),
+                            decoration: BoxDecoration(
+                              image: DecorationImage(
+                                image: AssetImage('assets/runnableicon.png'),
+                                fit: BoxFit.contain,
+                              ),
+                            ),
+                          ),
+                          /*child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceAround,
                               children: [
                                 Icon(Icons.play_arrow),
@@ -556,7 +577,7 @@ class _ReplPageState extends State<ReplPage> {
                                     ) //Your widget here,
                                 ),
                               ]
-                          )
+                          )*/
                       ),
                     ]
                 ),
@@ -850,6 +871,10 @@ class _CompilerPageState extends State<CompilerPage> {
                     children: <Widget>[
                       RaisedButton(
                           color: Theme.of(context).primaryColor,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8.0),
+                              side: BorderSide(color: Theme.of(context).primaryColor)
+                          ),
                           onPressed: () async {
                             settingsMap = await SharedPreferences.getInstance();
                             _storage = settingsMap.getString('storage');
@@ -902,9 +927,28 @@ class _CompilerPageState extends State<CompilerPage> {
                           )
                       ),
                       RaisedButton(
-                          color: Theme.of(context).primaryColor,
+                          //color: Theme.of(context).primaryColor,
+                          color: Color(0xff424242),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8.0),
+                              side: BorderSide(color: Theme.of(context).primaryColor)
+                          ),
                           onPressed: _sendRun,
-                          child: Row(
+                          child: Container(
+                            constraints: BoxConstraints(
+                              minHeight: 36,
+                              maxHeight: 36,
+                              minWidth: 88,
+                              maxWidth: 88,
+                            ),
+                            decoration: BoxDecoration(
+                              image: DecorationImage(
+                                image: AssetImage('assets/runnableicon.png'),
+                                fit: BoxFit.contain,
+                              ),
+                            ),
+                          ),
+                          /*child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceAround,
                               children: [
                                 Icon(Icons.play_arrow),
@@ -916,7 +960,7 @@ class _CompilerPageState extends State<CompilerPage> {
                                   ),
                                 ),
                               ]
-                          )
+                          )*/
                       ),
                     ]
                 ),
@@ -1015,9 +1059,27 @@ class _CompilerPageState extends State<CompilerPage> {
                               mainAxisAlignment: MainAxisAlignment.end,
                               children: <Widget>[
                                 RaisedButton(
-                                    color: Theme.of(context).primaryColor,
+                                    color: Color(0xff424242),
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8.0),
+                                        side: BorderSide(color: Theme.of(context).primaryColor)
+                                    ),
                                     onPressed: _sendSubmit,
-                                    child: Row(
+                                    child: Container(
+                                      constraints: BoxConstraints(
+                                        minHeight: 36,
+                                        maxHeight: 36,
+                                        minWidth: 88,
+                                        maxWidth: 88,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        image: DecorationImage(
+                                          image: AssetImage('assets/runnableiconleft.png'),
+                                          fit: BoxFit.contain,
+                                        ),
+                                      ),
+                                    ),
+                                    /*child: Row(
                                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                                         children: [
                                           Icon(Icons.keyboard_arrow_right),
@@ -1029,7 +1091,7 @@ class _CompilerPageState extends State<CompilerPage> {
                                               ) //Your widget here,
                                           ),
                                         ]
-                                    )
+                                    )*/
                                 ),
                               ]
                           ),
