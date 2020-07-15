@@ -7,7 +7,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:flutter_launcher_icons/main.dart';
 import 'sizes_helpers.dart';
 import 'dart:convert';
 import 'dart:async';
@@ -17,6 +16,12 @@ void main() {
   runApp(MaterialApp(
     title: 'RunnableApp',
     theme: ThemeData(
+      brightness: Brightness.light,
+      primaryColor: Color(0xff00e676),
+      accentColor: Color(0xff424242),
+    ),
+    darkTheme: ThemeData(
+      brightness: Brightness.dark,
       primaryColor: Color(0xff00e676),
       accentColor: Color(0xff424242),
     ),
@@ -42,8 +47,9 @@ class _SplashScreenState extends State<SplashScreen> {
 
   Future _initSettings() async {
     SharedPreferences settingsMap = await SharedPreferences.getInstance();
+
     await Permission.storage.request();
-    var storage = settingsMap.getString('storage') ?? 'Does not exist';
+    String storage = settingsMap.getString('storage') ?? 'Does not exist';
     if (storage == 'Does not exist') {
       final directory = await getApplicationDocumentsDirectory();
       final storageLocation = Directory('${directory.path}/storage/');
@@ -56,6 +62,17 @@ class _SplashScreenState extends State<SplashScreen> {
       }
       settingsMap.setString('storage', storagePath);
     }
+
+    String displayMode = settingsMap.getString('displayMode') ?? 'Does not exist';
+    if (displayMode == 'Does not exist') {
+      settingsMap.setString('displayMode', 'System');
+    }
+
+    int fontSize = settingsMap.getInt('fontSize') ?? 0;
+    if (fontSize == 0) {
+      settingsMap.setInt('fontSize', 12);
+    }
+
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => RunnableHome()),
@@ -171,7 +188,7 @@ class LangBox extends StatelessWidget {
             MaterialPageRoute(builder: (context) => RCSelectPage(name: name)),
           );
       },
-      color: Colors.white,
+      color: Colors.transparent,
       child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
@@ -274,7 +291,10 @@ class RCSelectPage extends StatelessWidget {
                           child: Center(
                             child: Text(
                                 'REPL',
-                                style: TextStyle(fontSize: 28),
+                                style: TextStyle(
+                                    color: Colors.black,
+                                    fontSize: 28
+                                ),
                             ),
                           )
                       ),
@@ -313,7 +333,10 @@ class RCSelectPage extends StatelessWidget {
                           child: Center(
                             child: Text(
                               'Compile',
-                              style: TextStyle(fontSize: 28),
+                              style: TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 28
+                              ),
                             ),
                           )
                       ),//Your widget here,
@@ -348,8 +371,8 @@ class _ReplPageState extends State<ReplPage> {
   // Page variables
   final TextEditingController _controller = TextEditingController();
   final FocusNode replNode = FocusNode();
-  List outputList = [];
-  String containerId = 'none';
+  List _outputList = [];
+  String _containerId = 'none';
   bool _connected = false;
   StateSetter _setStreamState;
 
@@ -378,19 +401,19 @@ class _ReplPageState extends State<ReplPage> {
     widget.channel.stream.listen((snapshot) {
       if (snapshot != null) {
         Map<String, dynamic> outputData = jsonDecode(snapshot);
-        if (containerId == 'none') {
+        if (_containerId == 'none') {
           if (outputData["output"] == null) {
             if (outputData["containerId"] != null) {
-              containerId = outputData["containerId"];
+              _containerId = outputData["containerId"];
             }
           }
         }
-        if (containerId == outputData['containerId']) {
+        if (_containerId == outputData['containerId']) {
           if (outputData["output"] != null) {
             if (outputData["output"].substring(0, 4) == '>>> ') {
-              outputList.add(outputData["output"].substring(4));
+              _outputList.add(outputData["output"].substring(4));
             } else {
-              outputList.add(outputData["output"]);
+              _outputList.add(outputData["output"]);
             }
           }
         }
@@ -512,7 +535,7 @@ class _ReplPageState extends State<ReplPage> {
                   child: StatefulBuilder(
                     builder: (context, setState) {
                       _setStreamState = setState;
-                      debugPrint('$outputList');
+                      debugPrint('$_outputList');
                       if (_connected) {
                         return Align(
                           alignment: Alignment.topLeft,
@@ -527,7 +550,7 @@ class _ReplPageState extends State<ReplPage> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: <Widget>[
-                                  for(var item in outputList) Text(item)
+                                  for(var item in _outputList) Text(item)
                                 ],
                               ),
                             ),
@@ -552,12 +575,8 @@ class _ReplPageState extends State<ReplPage> {
                           ),
                           onPressed: _sendSubmit,
                           child: Container(
-                            constraints: BoxConstraints(
-                              minHeight: 36,
-                              maxHeight: 36,
-                              minWidth: 88,
-                              maxWidth: 88,
-                            ),
+                            height: 36,
+                            width: 88,
                             decoration: BoxDecoration(
                               image: DecorationImage(
                                 image: AssetImage('assets/runnableicon.png'),
@@ -619,8 +638,8 @@ class _ReplPageState extends State<ReplPage> {
   }
 
   void _restart() {
-    containerId = 'none';
-    outputList = [];
+    _containerId = 'none';
+    _outputList = [];
     _setStreamState(() {});
     widget.channel.sink.add(
         json.encode(
@@ -645,7 +664,7 @@ class _ReplPageState extends State<ReplPage> {
         String fileName = _saveController.text;
         File file = File('$_storage/$fileName.txt');
         String contents = '';
-        outputList.forEach((line) {
+        _outputList.forEach((line) {
           contents = contents + line + '\n';
         });
         file.writeAsString(contents);
@@ -665,12 +684,12 @@ class _ReplPageState extends State<ReplPage> {
   void _sendSubmit() {
     if (_controller.text.isNotEmpty) {
       //widget.channel.sink.add(_controller.text);
-      outputList.add('>>> ' + _controller.text);
+      _outputList.add('>>> ' + _controller.text);
       widget.channel.sink.add(
           json.encode(
               {"action": "input",
                 "input": _controller.text,
-                "containerId": containerId,
+                "containerId": _containerId,
               }
           )
       );
@@ -714,9 +733,9 @@ class _CompilerPageState extends State<CompilerPage> {
   // Page variables
   final TextEditingController _topController = TextEditingController();
   final TextEditingController _bottomController = TextEditingController();
-  final FocusNode compNode = FocusNode();
-  List outputList = [];
-  String containerId = 'none';
+  final FocusNode _compNode = FocusNode();
+  List _outputList = [];
+  String _containerId = 'none';
   bool _connected = false;
   bool _firstRun = true;
   bool _visible = false;
@@ -727,7 +746,7 @@ class _CompilerPageState extends State<CompilerPage> {
     super.initState();
     //_listenForPermissionStatus();
     _listenToStream();
-    compNode.addListener(() {
+    _compNode.addListener(() {
       setState(() {});
     }); // Resize widget on text form selection
     if (widget.name == 'C') {
@@ -746,16 +765,16 @@ class _CompilerPageState extends State<CompilerPage> {
     widget.channel.stream.listen((snapshot) {
       if (snapshot != null) {
         Map<String, dynamic> outputData = jsonDecode(snapshot);
-        if (containerId == 'none') {
+        if (_containerId == 'none') {
           if (outputData["output"] == null) {
             if (outputData["containerId"] != null) {
-              containerId = outputData["containerId"];
+              _containerId = outputData["containerId"];
             }
           }
         }
-        if (containerId == outputData['containerId']) {
+        if (_containerId == outputData['containerId']) {
           if (outputData["output"] != null) {
-            outputList.add(outputData["output"]);
+            _outputList.add(outputData["output"]);
           }
         }
         _connected = true;
@@ -915,12 +934,18 @@ class _CompilerPageState extends State<CompilerPage> {
                           child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceAround,
                               children: [
-                                Icon(Icons.folder_open),
+                                Icon(
+                                  Icons.folder_open,
+                                  color: Colors.black,
+                                ),
                                 Padding(
                                     padding: const EdgeInsets.all(8.0),
                                     child: Text(
                                       'Open file',
-                                      style: TextStyle(fontSize: 16),
+                                      style: TextStyle(
+                                          color: Colors.black,
+                                          fontSize: 16,
+                                      ),
                                     ) //Your widget here,
                                 ),
                               ]
@@ -935,12 +960,8 @@ class _CompilerPageState extends State<CompilerPage> {
                           ),
                           onPressed: _sendRun,
                           child: Container(
-                            constraints: BoxConstraints(
-                              minHeight: 36,
-                              maxHeight: 36,
-                              minWidth: 88,
-                              maxWidth: 88,
-                            ),
+                            height: 36,
+                            width: 88,
                             decoration: BoxDecoration(
                               image: DecorationImage(
                                 image: AssetImage('assets/runnableicon.png'),
@@ -974,8 +995,8 @@ class _CompilerPageState extends State<CompilerPage> {
                     borderRadius: BorderRadius.all(Radius.circular(10)),
                   ),
                   constraints: BoxConstraints(
-                    minHeight: compNode.hasFocus ? 0.4*usableHeight(context): 96,
-                    maxHeight: compNode.hasFocus ? 0.4*usableHeight(context): 96,
+                    minHeight: _compNode.hasFocus ? 0.4*usableHeight(context): 96,
+                    maxHeight: _compNode.hasFocus ? 0.4*usableHeight(context): 96,
                   ),
                   child: Align(
                       alignment: Alignment.bottomCenter,
@@ -985,7 +1006,7 @@ class _CompilerPageState extends State<CompilerPage> {
                         child: Form(
                           child: TextFormField(
                             autofocus: true,
-                            focusNode: compNode,
+                            focusNode: _compNode,
                             autocorrect: false,
                             controller: _topController,
                             decoration: InputDecoration.collapsed(
@@ -1024,7 +1045,7 @@ class _CompilerPageState extends State<CompilerPage> {
                                   }
                                   //outputList.add(snapshot.data);
                                 }*/
-                                debugPrint('$outputList');
+                                debugPrint('$_outputList');
                                 if (_connected) {
                                   return Align(
                                     alignment: Alignment.topLeft,
@@ -1040,7 +1061,7 @@ class _CompilerPageState extends State<CompilerPage> {
                                           crossAxisAlignment: CrossAxisAlignment
                                               .start,
                                           children: <Widget>[
-                                            for(var item in outputList) Text(
+                                            for(var item in _outputList) Text(
                                                 item)
                                           ],
                                         ),
@@ -1066,12 +1087,8 @@ class _CompilerPageState extends State<CompilerPage> {
                                     ),
                                     onPressed: _sendSubmit,
                                     child: Container(
-                                      constraints: BoxConstraints(
-                                        minHeight: 36,
-                                        maxHeight: 36,
-                                        minWidth: 88,
-                                        maxWidth: 88,
-                                      ),
+                                      height: 36,
+                                      width: 88,
                                       decoration: BoxDecoration(
                                         image: DecorationImage(
                                           image: AssetImage('assets/runnableiconleft.png'),
@@ -1203,8 +1220,8 @@ class _CompilerPageState extends State<CompilerPage> {
         _firstRun = false;
       }
       else {
-        containerId = 'none';
-        outputList = [];
+        _containerId = 'none';
+        _outputList = [];
         _setStreamState(() {});
         widget.channel.sink.add(
             json.encode(
@@ -1217,21 +1234,21 @@ class _CompilerPageState extends State<CompilerPage> {
             )
         );
       }
-      compNode.unfocus();
+      _compNode.unfocus();
     }
   }
 
   void _sendStop() {
-    if (containerId != 'none') {
+    if (_containerId != 'none') {
       widget.channel.sink.add(
           json.encode(
               {
                 "action": "stop",
-                "containerId": containerId,
+                "containerId": _containerId,
               }
           )
       );
-      containerId = 'none';
+      _containerId = 'none';
     }
   }
 
@@ -1242,7 +1259,7 @@ class _CompilerPageState extends State<CompilerPage> {
           json.encode(
               {"action": "input",
                 "input": _bottomController.text,
-                "containerId": containerId,
+                "containerId": _containerId,
               }
           )
       );
@@ -1271,8 +1288,10 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   SharedPreferences settingsMap;
-  var _storage = 'Loading';
-  var _tempStorage = 'Loading';
+  String _displayMode = 'System';
+  int _fontSize = 12;
+  String _storage = 'Loading';
+  String _tempStorage = 'Loading';
   StateSetter _setStorageState; // To set state of storage dialog
 
   @override
@@ -1284,6 +1303,8 @@ class _SettingsPageState extends State<SettingsPage> {
   Future _loadSettings() async {
     settingsMap = await SharedPreferences.getInstance();
     setState(() {
+      _displayMode = settingsMap.getString('displayMode') ?? 'System';
+      _fontSize = settingsMap.getInt('fontSize') ?? 12;
       _storage = settingsMap.getString('storage') ?? 'Null';
       _tempStorage = settingsMap.getString('storage') ?? 'Null';
     });
@@ -1300,12 +1321,86 @@ class _SettingsPageState extends State<SettingsPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Card(
-                child: ListTile(
-                  leading: Icon(Icons.book),
-                  title: Text('User guide'),
-                  trailing: Icon(Icons.keyboard_arrow_right),
-                  onTap: null,
-                )
+                  child: ListTile(
+                    leading: Icon(Icons.book),
+                    title: Text('User guide'),
+                    trailing: Icon(Icons.keyboard_arrow_right),
+                    onTap: null,
+                  )
+              ),
+              Card(
+                  child: ListTile(
+                    leading: Icon(Icons.brightness_6),
+                    title: Text('Theme'),
+                    trailing: Container(
+                      width: 110,
+                      child: ButtonTheme(
+                        alignedDropdown: true,
+                        child: DropdownButton<String>(
+                          isExpanded: true,
+                          value: _displayMode,
+                          items: [
+                            DropdownMenuItem(
+                              child: Text('System'),
+                              value: 'System',
+                            ),
+                            DropdownMenuItem(
+                              child: Text('Light'),
+                              value: 'Light',
+                            ),
+                            DropdownMenuItem(
+                                child: Text('Dark'),
+                                value: 'Dark',
+                            ),
+                          ],
+                          onChanged: (value) {
+                            settingsMap.setString('displayMode', value);
+                            setState(() {
+                              _displayMode = value;
+                            });
+                          },
+                        ),
+                      ),
+                    ),
+                    onTap: null,
+                  )
+              ),
+              Card(
+                  child: ListTile(
+                    leading: Icon(Icons.text_fields),
+                    title: Text('Code font size'),
+                    trailing: Container(
+                      width: 110,
+                      child: ButtonTheme(
+                        alignedDropdown: true,
+                        child: DropdownButton<int>(
+                          isExpanded: true,
+                          value: _fontSize,
+                          items: [
+                            DropdownMenuItem(
+                              child: Text('Small'),
+                              value: 12,
+                            ),
+                            DropdownMenuItem(
+                              child: Text('Medium'),
+                              value: 16,
+                            ),
+                            DropdownMenuItem(
+                              child: Text('Large'),
+                              value: 20,
+                            ),
+                          ],
+                          onChanged: (value) {
+                            settingsMap.setInt('fontSize', value);
+                            setState(() {
+                              _fontSize = value;
+                            });
+                          },
+                        ),
+                      ),
+                    ),
+                    onTap: null,
+                  )
               ),
               Card(
                   child: ListTile(
@@ -1374,7 +1469,6 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   void _saveLocation() {
-    settingsMap.remove('storage');
     settingsMap.setString('storage', _tempStorage);
     setState(() {
       _storage = _tempStorage;
