@@ -41,6 +41,9 @@ dependencies:
   # To ask for user permission
   permission_handler: ^5.0.1+1
 
+  # To share files
+  share: ^0.6.4+3
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
