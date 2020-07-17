@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:share/share.dart';
 import 'sizes_helpers.dart';
 import 'dart:convert';
 import 'dart:async';
@@ -188,7 +189,11 @@ class LangBox extends StatelessWidget {
             MaterialPageRoute(builder: (context) => RCSelectPage(name: name)),
           );
       },
-      color: Colors.transparent,
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8.0),
+          side: BorderSide(color: Theme.of(context).primaryColor)
+      ),
+      color: Theme.of(context).scaffoldBackgroundColor,
       child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
@@ -350,6 +355,20 @@ class RCSelectPage extends StatelessWidget {
 }
 // RCSelectPage end
 
+// Pop-up menu choices start
+class Choice {
+  const Choice({this.title, this.icon});
+
+  final String title;
+  final IconData icon;
+}
+
+const List<Choice> choices = const <Choice>[
+  const Choice(title: 'Share', icon: Icons.share),
+  const Choice(title: 'Settings', icon: Icons.settings),
+];
+// Pop-up menu choices end
+
 // ReplPage start
 class ReplPage extends StatefulWidget {
   ReplPage({Key key, this.name, this.channel}) : super(key: key);
@@ -425,6 +444,17 @@ class _ReplPageState extends State<ReplPage> {
     });
   }
 
+  void _select(Choice choice) {
+    if (choice.title == 'Share') {
+      _shareText();
+    } else if (choice.title == 'Settings') {
+      Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => SettingsPage())
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -495,9 +525,6 @@ class _ReplPageState extends State<ReplPage> {
                                 FlatButton(
                                   child: Text(
                                     'Save',
-                                    /*style: TextStyle(
-                                      color: Theme.of(context).primaryColor,
-                                    ),*/
                                   ),
                                   onPressed: _saveFile,
                                 ),
@@ -509,16 +536,26 @@ class _ReplPageState extends State<ReplPage> {
                 );
               },
             ),
-            IconButton(
-              icon: Icon(Icons.settings),
-              tooltip: 'Settings',
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => SettingsPage()),
-                );
+            PopupMenuButton<Choice>(
+              onSelected: _select,
+              itemBuilder: (BuildContext context) {
+                return choices.map((Choice choice) {
+                  return PopupMenuItem<Choice>(
+                    value: choice,
+                    child: Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Icon(choice.icon),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                            child: Text(choice.title),
+                          ),
+                        ]
+                    ),
+                  );
+                }).toList();
               },
-            ),
+            )
           ],
         ),
         body: ListView(
@@ -663,11 +700,11 @@ class _ReplPageState extends State<ReplPage> {
       if (_storageFormKey.currentState.validate()) {
         String fileName = _saveController.text;
         File file = File('$_storage/$fileName.txt');
-        String contents = '';
+        String _contents = '';
         _outputList.forEach((line) {
-          contents = contents + line + '\n';
+          _contents = _contents + line + '\n';
         });
-        file.writeAsString(contents);
+        file.writeAsString(_contents);
 
         _saveController.clear();
 
@@ -678,6 +715,16 @@ class _ReplPageState extends State<ReplPage> {
 
         Navigator.pop(context);
       }
+    }
+  }
+
+  void _shareText() {
+    if (_outputList != []) {
+      String _contents = '';
+      _outputList.forEach((line) {
+        _contents = _contents + line + '\n';
+      });
+      Share.share(_contents);
     }
   }
 
@@ -785,6 +832,17 @@ class _CompilerPageState extends State<CompilerPage> {
     });
   }
 
+  void _select(Choice choice) {
+    if (choice.title == 'Share') {
+      _shareInputAsText();
+    } else if (choice.title == 'Settings') {
+      Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => SettingsPage())
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -869,16 +927,26 @@ class _CompilerPageState extends State<CompilerPage> {
                 );
               },
             ),
-            IconButton(
-              icon: Icon(Icons.settings),
-              tooltip: 'Settings',
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => SettingsPage()),
-                );
+            PopupMenuButton<Choice>(
+              onSelected: _select,
+              itemBuilder: (BuildContext context) {
+                return choices.map((Choice choice) {
+                  return PopupMenuItem<Choice>(
+                    value: choice,
+                    child: Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Icon(choice.icon),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                            child: Text(choice.title),
+                          ),
+                        ]
+                    ),
+                  );
+                }).toList();
               },
-            ),
+            )
           ],
         ),
         body: ListView(
@@ -1180,6 +1248,12 @@ class _CompilerPageState extends State<CompilerPage> {
 
         Navigator.pop(context);
       }
+    }
+  }
+
+  void _shareInputAsText() {
+    if (_topController.text.isNotEmpty) {
+      Share.share(_topController.text);
     }
   }
 
