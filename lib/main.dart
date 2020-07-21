@@ -13,7 +13,18 @@ import 'dart:convert';
 import 'dart:async';
 import 'dart:io';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  SharedPreferences settingsMap = await SharedPreferences.getInstance();
+  String _displayMode = settingsMap.getString('displayMode') ?? 'System';
+  ThemeMode _theme = ThemeMode.system;
+  if (_displayMode == 'Light') {
+    _theme = ThemeMode.light;
+  } else if (_displayMode == 'Dark') {
+    _theme = ThemeMode.dark;
+  }
+
   runApp(MaterialApp(
     title: 'RunnableApp',
     theme: ThemeData(
@@ -26,6 +37,7 @@ void main() {
       primaryColor: Color(0xff00e676),
       accentColor: Color(0xff424242),
     ),
+    themeMode: _theme,
     home: SplashScreen()
     //home: RunnableHome()
     //home: ReplPage(name: 'Python')
@@ -71,7 +83,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
     int fontSize = settingsMap.getInt('fontSize') ?? 0;
     if (fontSize == 0) {
-      settingsMap.setInt('fontSize', 12);
+      settingsMap.setInt('fontSize', 14);
     }
 
     Navigator.pushReplacement(
@@ -386,6 +398,7 @@ class _ReplPageState extends State<ReplPage> {
   String _storage = 'Loading';
   StateSetter _setStorageState;
   SharedPreferences settingsMap;
+  int _fontSize = 14;
 
   // Page variables
   final TextEditingController _controller = TextEditingController();
@@ -394,30 +407,39 @@ class _ReplPageState extends State<ReplPage> {
   String _containerId = 'none';
   bool _connected = false;
   StateSetter _setStreamState;
+  StreamSubscription _streamSubscription;
 
   @override
   void initState() {
     super.initState();
     _initRepl();
-    _listenToStream();
-    widget.channel.sink.add(
-        json.encode(
-            {
-              "action" : "launch",
-              "lang" : widget.name.toLowerCase(),
-              "mode" : "repl",
-            }
-        )
-    );
+    if (widget.channel != null) {
+      _listenToStream();
+      widget.channel.sink.add(
+          json.encode(
+              {
+                "action": "launch",
+                "lang": widget.name.toLowerCase(),
+                "mode": "repl",
+              }
+          )
+      );
+    }
   }
 
   void _initRepl() async {
     settingsMap = await SharedPreferences.getInstance();
-    _storage = settingsMap.getString('storage');
+    _readPreferences();
+  }
+
+  void _readPreferences() {
+    _storage = settingsMap.getString('storage') ?? null;
+    _fontSize = settingsMap.getInt('fontSize') ?? 14;
+    setState(() {});
   }
 
   void _listenToStream() {
-    widget.channel.stream.listen((snapshot) {
+    _streamSubscription = widget.channel.stream.listen((snapshot) {
       if (snapshot != null) {
         Map<String, dynamic> outputData = jsonDecode(snapshot);
         if (_containerId == 'none') {
@@ -448,11 +470,16 @@ class _ReplPageState extends State<ReplPage> {
     if (choice.title == 'Share') {
       _shareText();
     } else if (choice.title == 'Settings') {
-      Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => SettingsPage())
-      );
+      _openSettings();
     }
+  }
+
+  void _openSettings() async {
+    await Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => SettingsPage())
+    );
+    _readPreferences();
   }
 
   @override
@@ -587,7 +614,7 @@ class _ReplPageState extends State<ReplPage> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: <Widget>[
-                                  for(var item in _outputList) Text(item)
+                                  for(var item in _outputList) Text(item, style: TextStyle(fontSize: _fontSize.toDouble()),)
                                 ],
                               ),
                             ),
@@ -656,6 +683,7 @@ class _ReplPageState extends State<ReplPage> {
                         reverse: true,
                         child: Form(
                           child: TextFormField(
+                            style: TextStyle(fontSize: _fontSize.toDouble()),
                             autofocus: true,
                             focusNode: replNode,
                             autocorrect: false,
@@ -747,6 +775,7 @@ class _ReplPageState extends State<ReplPage> {
   @override
   void dispose() {
     widget.channel.sink.close();
+    _streamSubscription.cancel();
     _controller.dispose();
     FocusScope.of(context).unfocus(); // Remove keyboard
     super.dispose();
@@ -773,9 +802,7 @@ class _CompilerPageState extends State<CompilerPage> {
   StateSetter _setStorageState;
   StateSetter _setLoadState;
   SharedPreferences settingsMap;
-/*final Permission _storagePermission = Permission.storage;
-  PermissionStatus _permissionStatus = PermissionStatus.undetermined;
-*/
+  int _fontSize = 14;
 
   // Page variables
   final TextEditingController _topController = TextEditingController();
@@ -787,11 +814,12 @@ class _CompilerPageState extends State<CompilerPage> {
   bool _firstRun = true;
   bool _visible = false;
   StateSetter _setStreamState;
+  StreamSubscription _streamSubscription;
 
   @override
   void initState() {
     super.initState();
-    //_listenForPermissionStatus();
+    _initCompile();
     _listenToStream();
     _compNode.addListener(() {
       setState(() {});
@@ -803,13 +831,19 @@ class _CompilerPageState extends State<CompilerPage> {
     }
   }
 
- /* void _listenForPermissionStatus() async {
-    final status = await _storagePermission.status;
-    setState(() => _permissionStatus = status);
-  }*/
+  void _initCompile() async {
+    settingsMap = await SharedPreferences.getInstance();
+    _readPreferences();
+  }
+
+  void _readPreferences() {
+    _storage = settingsMap.getString('storage') ?? null;
+    _fontSize = settingsMap.getInt('fontSize') ?? 14;
+    setState(() {});
+  }
 
   void _listenToStream() {
-    widget.channel.stream.listen((snapshot) {
+    _streamSubscription = widget.channel.stream.listen((snapshot) {
       if (snapshot != null) {
         Map<String, dynamic> outputData = jsonDecode(snapshot);
         if (_containerId == 'none') {
@@ -836,11 +870,16 @@ class _CompilerPageState extends State<CompilerPage> {
     if (choice.title == 'Share') {
       _shareInputAsText();
     } else if (choice.title == 'Settings') {
-      Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => SettingsPage())
-      );
+      _openSettings();
     }
+  }
+
+  void _openSettings() async {
+    await Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => SettingsPage())
+    );
+    _readPreferences();
   }
 
   @override
@@ -963,7 +1002,6 @@ class _CompilerPageState extends State<CompilerPage> {
                               side: BorderSide(color: Theme.of(context).primaryColor)
                           ),
                           onPressed: () async {
-                            settingsMap = await SharedPreferences.getInstance();
                             _storage = settingsMap.getString('storage');
                             await showDialog(
                                 context: context,
@@ -1073,6 +1111,7 @@ class _CompilerPageState extends State<CompilerPage> {
                         reverse: true,
                         child: Form(
                           child: TextFormField(
+                            style: TextStyle(fontSize: _fontSize.toDouble()),
                             autofocus: true,
                             focusNode: _compNode,
                             autocorrect: false,
@@ -1129,8 +1168,7 @@ class _CompilerPageState extends State<CompilerPage> {
                                           crossAxisAlignment: CrossAxisAlignment
                                               .start,
                                           children: <Widget>[
-                                            for(var item in _outputList) Text(
-                                                item)
+                                            for(var item in _outputList) Text(item, style: TextStyle(fontSize: _fontSize.toDouble()),)
                                           ],
                                         ),
                                       ),
@@ -1199,6 +1237,7 @@ class _CompilerPageState extends State<CompilerPage> {
                                   reverse: true,
                                   child: Form(
                                     child: TextFormField(
+                                      style: TextStyle(fontSize: _fontSize.toDouble()),
                                       autocorrect: false,
                                       controller: _bottomController,
                                       decoration: InputDecoration.collapsed(
@@ -1344,6 +1383,7 @@ class _CompilerPageState extends State<CompilerPage> {
   @override
   void dispose() {
     widget.channel.sink.close();
+    _streamSubscription.cancel();
     _topController.dispose();
     _bottomController.dispose();
     FocusScope.of(context).unfocus(); // Remove keyboard
@@ -1363,7 +1403,7 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
   SharedPreferences settingsMap;
   String _displayMode = 'System';
-  int _fontSize = 12;
+  int _fontSize = 14;
   String _storage = 'Loading';
   String _tempStorage = 'Loading';
   StateSetter _setStorageState; // To set state of storage dialog
@@ -1378,7 +1418,7 @@ class _SettingsPageState extends State<SettingsPage> {
     settingsMap = await SharedPreferences.getInstance();
     setState(() {
       _displayMode = settingsMap.getString('displayMode') ?? 'System';
-      _fontSize = settingsMap.getInt('fontSize') ?? 12;
+      _fontSize = settingsMap.getInt('fontSize') ?? 14;
       _storage = settingsMap.getString('storage') ?? 'Null';
       _tempStorage = settingsMap.getString('storage') ?? 'Null';
     });
@@ -1453,15 +1493,15 @@ class _SettingsPageState extends State<SettingsPage> {
                           items: [
                             DropdownMenuItem(
                               child: Text('Small'),
-                              value: 12,
+                              value: 14,
                             ),
                             DropdownMenuItem(
                               child: Text('Medium'),
-                              value: 16,
+                              value: 18,
                             ),
                             DropdownMenuItem(
                               child: Text('Large'),
-                              value: 20,
+                              value: 22,
                             ),
                           ],
                           onChanged: (value) {
