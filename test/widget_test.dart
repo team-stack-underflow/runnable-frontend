@@ -17,6 +17,17 @@ void main() {
   // Wraps a Widget in a MaterialApp for testing
   var wrapWidget = ({Widget widget}) => MaterialApp(home: widget);
 
+  testWidgets('SplashScreen', (WidgetTester tester) async {
+    await tester.pumpWidget(wrapWidget(widget: SplashScreen()));
+
+    // There should be one main widget
+    expect(find.byType(SplashScreen), findsOneWidget);
+
+    // There should be one main text
+    expect(find.text('Welcome to Runnable'), findsOneWidget);
+
+  });
+
   testWidgets('RunnableHome', (WidgetTester tester) async {
     await tester.pumpWidget(wrapWidget(widget: RunnableHome()));
 
@@ -25,11 +36,13 @@ void main() {
 
     // There should be one app bar
     expect(find.byType(AppBar), findsOneWidget);
+    expect(find.byType(Image), findsOneWidget);
     expect(find.text('Runnable'), findsOneWidget);
     expect(find.byIcon(Icons.settings), findsOneWidget);
     
     // There should be four language options
     expect(find.byType(LangBox), findsNWidgets(4));
+    expect(find.byType(RaisedButton), findsNWidgets(4));
     expect(find.text('Python'), findsOneWidget);
     expect(find.text('Java'), findsOneWidget);
     expect(find.text('C'), findsOneWidget);
@@ -50,24 +63,30 @@ void main() {
     expect(find.byIcon(Icons.settings), findsOneWidget);
 
     // There should be two environment options
+    expect(find.byType(RaisedButton), findsNWidgets(2));
     expect(find.text('REPL'), findsOneWidget);
     expect(find.text('Compile'), findsOneWidget);
+
   });
 
- /* testWidgets('ReplPage', (WidgetTester tester) async {
-    await tester.runAsync(() async {
-      await tester.pumpWidget(wrapWidget(widget: ReplPage(name: 'Test', channel: null,)));
+/*  testWidgets('ReplPage', (WidgetTester tester) async {
+    //await tester.runAsync(() async {
+      await tester.pumpWidget(wrapWidget(widget: ReplPage(
+        name: 'Python',
+        channel: IOWebSocketChannel.connect('wss://s4tdw93cwd.execute-api.us-east-1.amazonaws.com/default/'),
+      )));
       await tester.pumpAndSettle();
+
       // There should be one main widget
       //expect(find.byType(ReplPage), findsOneWidget);
 
       // There should be one app bar
       expect(find.byType(AppBar), findsOneWidget);
       expect(find.byIcon(Icons.home), findsOneWidget);
-      expect(find.text('Test'), findsOneWidget);
+      expect(find.text('Python'), findsOneWidget);
       expect(find.byIcon(Icons.refresh), findsOneWidget);
       expect(find.byIcon(Icons.save), findsOneWidget);
-    });
+    //});
   });*/
 
   testWidgets('SettingsPage', (WidgetTester tester) async {
