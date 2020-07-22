@@ -799,6 +799,7 @@ class _CompilerPageState extends State<CompilerPage> {
   final _storageFormKey = GlobalKey<FormState>();
   String _storage = 'Loading';
   String _fileToOpen = 'Browse files';
+  String _sourceExtension = 'py';
   StateSetter _setStorageState;
   StateSetter _setLoadState;
   SharedPreferences settingsMap;
@@ -826,8 +827,12 @@ class _CompilerPageState extends State<CompilerPage> {
     }); // Resize widget on text form selection
     if (widget.name == 'C') {
       _topController.text = '#include <stdio.h>\nint main(void){\n    \n    return 0;\n}';
+      _sourceExtension = 'c';
     } else if (widget.name == 'Java') {
       _topController.text = 'public class Program {\n    public static void main(String[] args) {\n        \n    }\n}';
+      _sourceExtension = 'java';
+    } else if (widget.name == 'JavaScript') {
+      _sourceExtension = 'js';
     }
   }
 
@@ -1016,7 +1021,7 @@ class _CompilerPageState extends State<CompilerPage> {
                                             children: [
                                               RaisedButton(
                                                 child: Text(_fileToOpen),
-                                                onPressed: _browseTxts,
+                                                onPressed: _browseSources,
                                               ),
                                             ],
                                           ),
@@ -1296,8 +1301,8 @@ class _CompilerPageState extends State<CompilerPage> {
     }
   }
 
-  void _browseTxts() async {
-    File file = await FilePicker.getFile(type: FileType.custom, allowedExtensions: ['txt']);
+  void _browseSources() async {
+    File file = await FilePicker.getFile(type: FileType.custom, allowedExtensions: ['txt', _sourceExtension]);
     _fileToOpen = file.path ?? _fileToOpen;
     _setLoadState(() {});
   }
