@@ -799,7 +799,6 @@ class _CompilerPageState extends State<CompilerPage> {
   final _storageFormKey = GlobalKey<FormState>();
   String _storage = 'Loading';
   String _fileToOpen = 'Browse files';
-  String _sourceExtension = 'py';
   StateSetter _setStorageState;
   StateSetter _setLoadState;
   SharedPreferences settingsMap;
@@ -827,12 +826,8 @@ class _CompilerPageState extends State<CompilerPage> {
     }); // Resize widget on text form selection
     if (widget.name == 'C') {
       _topController.text = '#include <stdio.h>\nint main(void){\n    \n    return 0;\n}';
-      _sourceExtension = 'c';
     } else if (widget.name == 'Java') {
       _topController.text = 'public class Program {\n    public static void main(String[] args) {\n        \n    }\n}';
-      _sourceExtension = 'java';
-    } else if (widget.name == 'JavaScript') {
-      _sourceExtension = 'js';
     }
   }
 
@@ -1302,7 +1297,7 @@ class _CompilerPageState extends State<CompilerPage> {
   }
 
   void _browseSources() async {
-    File file = await FilePicker.getFile(type: FileType.custom, allowedExtensions: ['txt', _sourceExtension]);
+    File file = await FilePicker.getFile(type: FileType.any);
     _fileToOpen = file.path ?? _fileToOpen;
     _setLoadState(() {});
   }
@@ -1315,7 +1310,13 @@ class _CompilerPageState extends State<CompilerPage> {
           File file = File(_fileToOpen);
           String contents = await file.readAsString();
           _topController.text = contents;
-        } catch (e) {}
+        } catch (e) {
+          Scaffold.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Invalid file type'),
+            )
+          );
+        }
         Navigator.pop(context);
       }
     }
@@ -1596,3 +1597,26 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 }
 // SettingsPage end
+
+class UserGuide extends StatelessWidget {
+  UserGuide({Key key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    // Scaffold is a layout for the major Material Components.
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('User Guide'),
+      ),
+      body: ListView(
+        children: <Widget>[
+          Text('Welcome to Runnable'),
+          Text('We provide a coding environment for users to run code.'),
+          Text('This guide will '),
+          Text('REPL Mode'),
+          Text('Compile Mode'),
+        ],
+      ),
+    );
+  }
+}
