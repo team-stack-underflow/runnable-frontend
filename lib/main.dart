@@ -81,9 +81,9 @@ class _SplashScreenState extends State<SplashScreen> {
       settingsMap.setString('displayMode', 'System');
     }
 
-    int fontSize = settingsMap.getInt('fontSize') ?? 0;
+    double fontSize = settingsMap.getDouble('fontSize') ?? 0;
     if (fontSize == 0) {
-      settingsMap.setInt('fontSize', 14);
+      settingsMap.setDouble('fontSize', 14);
     }
 
     Navigator.pushReplacement(
@@ -398,7 +398,7 @@ class _ReplPageState extends State<ReplPage> {
   String _storage = 'Loading';
   StateSetter _setStorageState;
   SharedPreferences settingsMap;
-  int _fontSize = 14;
+  double _fontSize = 14;
 
   // Page variables
   final TextEditingController _controller = TextEditingController();
@@ -434,7 +434,7 @@ class _ReplPageState extends State<ReplPage> {
 
   void _readPreferences() {
     _storage = settingsMap.getString('storage') ?? null;
-    _fontSize = settingsMap.getInt('fontSize') ?? 14;
+    _fontSize = settingsMap.getDouble('fontSize') ?? 14;
     setState(() {});
   }
 
@@ -614,7 +614,7 @@ class _ReplPageState extends State<ReplPage> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: <Widget>[
-                                  for(var item in _outputList) Text(item, style: TextStyle(fontSize: _fontSize.toDouble()),)
+                                  for(var item in _outputList) Text(item, style: TextStyle(fontSize: _fontSize),)
                                 ],
                               ),
                             ),
@@ -683,7 +683,7 @@ class _ReplPageState extends State<ReplPage> {
                         reverse: true,
                         child: Form(
                           child: TextFormField(
-                            style: TextStyle(fontSize: _fontSize.toDouble()),
+                            style: TextStyle(fontSize: _fontSize),
                             autofocus: true,
                             focusNode: replNode,
                             autocorrect: false,
@@ -802,7 +802,7 @@ class _CompilerPageState extends State<CompilerPage> {
   StateSetter _setStorageState;
   StateSetter _setLoadState;
   SharedPreferences settingsMap;
-  int _fontSize = 14;
+  double _fontSize = 14;
 
   // Page variables
   final TextEditingController _topController = TextEditingController();
@@ -838,7 +838,7 @@ class _CompilerPageState extends State<CompilerPage> {
 
   void _readPreferences() {
     _storage = settingsMap.getString('storage') ?? null;
-    _fontSize = settingsMap.getInt('fontSize') ?? 14;
+    _fontSize = settingsMap.getDouble('fontSize') ?? 14;
     setState(() {});
   }
 
@@ -1111,7 +1111,7 @@ class _CompilerPageState extends State<CompilerPage> {
                         reverse: true,
                         child: Form(
                           child: TextFormField(
-                            style: TextStyle(fontSize: _fontSize.toDouble()),
+                            style: TextStyle(fontSize: _fontSize),
                             autofocus: true,
                             focusNode: _compNode,
                             autocorrect: false,
@@ -1168,7 +1168,7 @@ class _CompilerPageState extends State<CompilerPage> {
                                           crossAxisAlignment: CrossAxisAlignment
                                               .start,
                                           children: <Widget>[
-                                            for(var item in _outputList) Text(item, style: TextStyle(fontSize: _fontSize.toDouble()),)
+                                            for(var item in _outputList) Text(item, style: TextStyle(fontSize: _fontSize),)
                                           ],
                                         ),
                                       ),
@@ -1237,7 +1237,7 @@ class _CompilerPageState extends State<CompilerPage> {
                                   reverse: true,
                                   child: Form(
                                     child: TextFormField(
-                                      style: TextStyle(fontSize: _fontSize.toDouble()),
+                                      style: TextStyle(fontSize: _fontSize),
                                       autocorrect: false,
                                       controller: _bottomController,
                                       decoration: InputDecoration.collapsed(
@@ -1409,7 +1409,7 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
   SharedPreferences settingsMap;
   String _displayMode = 'System';
-  int _fontSize = 14;
+  double _fontSize = 14;
   String _storage = 'Loading';
   String _tempStorage = 'Loading';
   StateSetter _setStorageState; // To set state of storage dialog
@@ -1424,7 +1424,7 @@ class _SettingsPageState extends State<SettingsPage> {
     settingsMap = await SharedPreferences.getInstance();
     setState(() {
       _displayMode = settingsMap.getString('displayMode') ?? 'System';
-      _fontSize = settingsMap.getInt('fontSize') ?? 14;
+      _fontSize = settingsMap.getDouble('fontSize') ?? 14;
       _storage = settingsMap.getString('storage') ?? 'Null';
       _tempStorage = settingsMap.getString('storage') ?? 'Null';
     });
@@ -1445,7 +1445,12 @@ class _SettingsPageState extends State<SettingsPage> {
                     leading: Icon(Icons.book),
                     title: Text('User guide'),
                     trailing: Icon(Icons.keyboard_arrow_right),
-                    onTap: null,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => UserGuide(fontSize: _fontSize,))
+                      );
+                    }
                   )
               ),
               Card(
@@ -1493,7 +1498,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       width: 110,
                       child: ButtonTheme(
                         alignedDropdown: true,
-                        child: DropdownButton<int>(
+                        child: DropdownButton<double>(
                           isExpanded: true,
                           value: _fontSize,
                           items: [
@@ -1511,7 +1516,7 @@ class _SettingsPageState extends State<SettingsPage> {
                             ),
                           ],
                           onChanged: (value) {
-                            settingsMap.setInt('fontSize', value);
+                            settingsMap.setDouble('fontSize', value);
                             setState(() {
                               _fontSize = value;
                             });
@@ -1599,7 +1604,8 @@ class _SettingsPageState extends State<SettingsPage> {
 // SettingsPage end
 
 class UserGuide extends StatelessWidget {
-  UserGuide({Key key}) : super(key: key);
+  UserGuide({Key key, this.fontSize}) : super(key: key);
+  final double fontSize;
 
   @override
   Widget build(BuildContext context) {
@@ -1608,14 +1614,93 @@ class UserGuide extends StatelessWidget {
       appBar: AppBar(
         title: Text('User Guide'),
       ),
-      body: ListView(
-        children: <Widget>[
-          Text('Welcome to Runnable'),
-          Text('We provide a coding environment for users to run code.'),
-          Text('This guide will '),
-          Text('REPL Mode'),
-          Text('Compile Mode'),
-        ],
+      body: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: ListView(
+          children: <Widget>[
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: Center(
+                  child: Text(
+                    'Welcome to Runnable',
+                    style: TextStyle(
+                      color: Theme.of(context).primaryColor,
+                      fontSize: fontSize + 4,
+                    ),
+                  )
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: Text('Runnable provides a coding environment for users to run code.',
+                style: TextStyle(fontSize: fontSize),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: Text('This guide will go through the 2 main code execution types.',
+                style: TextStyle(fontSize: fontSize),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: Center(
+                  child: Text('REPL Mode',
+                    style: TextStyle(fontSize: fontSize + 4),
+                  )
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: Text('Internet connection is required throughout usage. If the loading circle indicator persists, please check your internet connection.',
+                style: TextStyle(fontSize: fontSize),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: Text('After opening, please wait for the environment to initialise. '
+                  'This may take a while, after which an initialisation message will be displayed.',
+                style: TextStyle(fontSize: fontSize),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: Text('After initialisation, it will behave like a basic read-eval-print-loop environment. '
+                  'This will take in user input from the text box at the bottom, evaluate it, and then display the output on top.',
+                style: TextStyle(fontSize: fontSize),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: Center(
+                  child: Text('Compile Mode',
+                    style: TextStyle(fontSize: fontSize + 4),
+                  )
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: Text('There are 2 ways to start using this environment. '
+                  'You may start typing code directly into the text box, or choose to open an existing code file. '
+                  'Note that only text files (ending with .txt) or code specific files (eg. ending with .py or .c) can be opened.',
+                style: TextStyle(fontSize: fontSize),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: Text('After running the code, please wait for the code to be evaluated. '
+                  'This may take a while, after which the output will be displayed in the middle.',
+                style: TextStyle(fontSize: fontSize),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: Text('An additional text box is provided below to provide standard input.',
+                style: TextStyle(fontSize: fontSize),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
