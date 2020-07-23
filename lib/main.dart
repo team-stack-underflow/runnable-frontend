@@ -466,22 +466,6 @@ class _ReplPageState extends State<ReplPage> {
     });
   }
 
-  void _select(Choice choice) {
-    if (choice.title == 'Share') {
-      _shareText();
-    } else if (choice.title == 'Settings') {
-      _openSettings();
-    }
-  }
-
-  void _openSettings() async {
-    await Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => SettingsPage())
-    );
-    _readPreferences();
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -746,6 +730,23 @@ class _ReplPageState extends State<ReplPage> {
     }
   }
 
+  // Extra options for top right start
+  void _select(Choice choice) {
+    if (choice.title == 'Share') {
+      _shareText();
+    } else if (choice.title == 'Settings') {
+      _openSettings();
+    }
+  }
+
+  void _openSettings() async {
+    await Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => SettingsPage())
+    );
+    _readPreferences();
+  }
+
   void _shareText() {
     if (_outputList != []) {
       String _contents = '';
@@ -755,6 +756,7 @@ class _ReplPageState extends State<ReplPage> {
       Share.share(_contents);
     }
   }
+  // Extra options for top right end
 
   void _sendSubmit() {
     if (_controller.text.isNotEmpty) {
@@ -799,6 +801,7 @@ class _CompilerPageState extends State<CompilerPage> {
   final _storageFormKey = GlobalKey<FormState>();
   String _storage = 'Loading';
   String _fileToOpen = 'Browse files';
+  String _autoSaved;
   StateSetter _setStorageState;
   StateSetter _setLoadState;
   SharedPreferences settingsMap;
@@ -833,7 +836,39 @@ class _CompilerPageState extends State<CompilerPage> {
 
   void _initCompile() async {
     settingsMap = await SharedPreferences.getInstance();
+    _autoSaved = settingsMap.getString('autoSaved' + widget.name) ?? null;
+    if (_autoSaved != null) {
+      await showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('Restore previous session?'),
+              content: Text('Previous data will be cleared if you select No'),
+              actions: [
+                FlatButton(
+                  child: Text('Yes'),
+                  onPressed: _loadSaved,
+                ),
+                FlatButton(
+                  child: Text('No'),
+                  onPressed: _resetSaved,
+                )
+              ],
+            );
+          }
+      );
+    }
     _readPreferences();
+  }
+
+  void _loadSaved() {
+    _topController.text = _autoSaved;
+    Navigator.pop(context);
+  }
+
+  void _resetSaved() {
+    settingsMap.remove('autoSaved' + widget.name);
+    Navigator.pop(context);
   }
 
   void _readPreferences() {
@@ -864,22 +899,6 @@ class _CompilerPageState extends State<CompilerPage> {
         _connected = false;
       }
     });
-  }
-
-  void _select(Choice choice) {
-    if (choice.title == 'Share') {
-      _shareInputAsText();
-    } else if (choice.title == 'Settings') {
-      _openSettings();
-    }
-  }
-
-  void _openSettings() async {
-    await Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => SettingsPage())
-    );
-    _readPreferences();
   }
 
   @override
@@ -1075,19 +1094,6 @@ class _CompilerPageState extends State<CompilerPage> {
                               ),
                             ),
                           ),
-                          /*child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              children: [
-                                Icon(Icons.play_arrow),
-                                Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Text(
-                                    'Run',
-                                    style: TextStyle(fontSize: 16),
-                                  ),
-                                ),
-                              ]
-                          )*/
                       ),
                     ]
                 ),
@@ -1111,6 +1117,11 @@ class _CompilerPageState extends State<CompilerPage> {
                         reverse: true,
                         child: Form(
                           child: TextFormField(
+                            onChanged: (text) {
+                              if (text != null) {
+                                settingsMap.setString('autoSaved' + widget.name, text);
+                              }
+                            },
                             style: TextStyle(fontSize: _fontSize),
                             autofocus: true,
                             focusNode: _compNode,
@@ -1257,14 +1268,6 @@ class _CompilerPageState extends State<CompilerPage> {
     );
   }
 
-/*  Future<bool> requestPermission(Permission permission) async {
-    final status = await permission.request();
-
-    setState(() {
-      _permissionStatus = status;
-    });
-  }*/
-
   void _browseFiles() async {
     _storage = await FilePicker.getDirectoryPath() ?? _storage;
     _setStorageState(() {});
@@ -1290,11 +1293,29 @@ class _CompilerPageState extends State<CompilerPage> {
     }
   }
 
+  // Extra options for top right start
+  void _select(Choice choice) {
+    if (choice.title == 'Share') {
+      _shareInputAsText();
+    } else if (choice.title == 'Settings') {
+      _openSettings();
+    }
+  }
+
+  void _openSettings() async {
+    await Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => SettingsPage())
+    );
+    _readPreferences();
+  }
+
   void _shareInputAsText() {
     if (_topController.text.isNotEmpty) {
       Share.share(_topController.text);
     }
   }
+  // Extra options for top right end
 
   void _browseSources() async {
     File file = await FilePicker.getFile(type: FileType.any);
