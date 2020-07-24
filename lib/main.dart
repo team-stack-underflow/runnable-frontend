@@ -9,6 +9,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:share/share.dart';
 import 'sizes_helpers.dart';
+import 'secret.dart';
 import 'dart:convert';
 import 'dart:async';
 import 'dart:io';
@@ -419,6 +420,7 @@ class _ReplPageState extends State<ReplPage> {
           json.encode(
               {
                 "action": "launch",
+                "api-key": queryApiKey(),
                 "lang": widget.name.toLowerCase(),
                 "mode": "repl",
               }
@@ -1350,6 +1352,7 @@ class _CompilerPageState extends State<CompilerPage> {
             json.encode(
                 {
                   "action": "launch",
+                  "api-key": queryApiKey(),
                   "lang": widget.name.toLowerCase(),
                   "mode": "compile",
                   "prog": _topController.text,
