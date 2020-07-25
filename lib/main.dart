@@ -17,6 +17,7 @@ import 'dart:io';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Check theme settings
   SharedPreferences settingsMap = await SharedPreferences.getInstance();
   String _displayMode = settingsMap.getString('displayMode') ?? 'System';
   ThemeMode _theme = ThemeMode.system;
@@ -27,23 +28,19 @@ void main() async {
   }
 
   runApp(MaterialApp(
-    title: 'RunnableApp',
-    theme: ThemeData(
-      brightness: Brightness.light,
-      primaryColor: Color(0xff00e676),
-      accentColor: Color(0xff424242),
-    ),
-    darkTheme: ThemeData(
-      brightness: Brightness.dark,
-      primaryColor: Color(0xff00e676),
-      accentColor: Color(0xff424242),
-    ),
-    themeMode: _theme,
-    home: SplashScreen()
-    //home: RunnableHome()
-    //home: ReplPage(name: 'Python')
-    //home: CompilerPage(name: 'Python')
-    //home: SettingsPage()
+      title: 'RunnableApp',
+      theme: ThemeData(
+        brightness: Brightness.light,
+        primaryColor: Color(0xff00e676),
+        accentColor: Color(0xff424242),
+      ),
+      darkTheme: ThemeData(
+        brightness: Brightness.dark,
+        primaryColor: Color(0xff00e676),
+        accentColor: Color(0xff424242),
+      ),
+      themeMode: _theme,
+      home: SplashScreen()
   ));
 }
 
@@ -96,7 +93,6 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       body: Center(
         child: Text('Welcome to Runnable'),
       ),
@@ -112,79 +108,79 @@ class RunnableHome extends StatelessWidget {
   Widget build(BuildContext context) {
     // Scaffold is a layout for the major Material Components.
     return Scaffold(
-      appBar: AppBar(
-        leading: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Image.asset(
+        appBar: AppBar(
+          leading: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Image.asset(
               'assets/runnableicon.png',
               fit: BoxFit.contain,
-          ),
-        ),
-        title: Text('Runnable'),
-        actions: <Widget>[
-          IconButton(
-            icon: Icon(Icons.settings),
-            tooltip: 'Settings',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => SettingsPage()),
-              );
-            },
-          ),
-        ],
-      ),
-      // body is the majority of the screen.
-      body: Center(
-        child: ListView(
-          shrinkWrap: true,
-          children: [
-            Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  //RCSelect(type: setType),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text(
-                      'Select language',
-                      style: TextStyle(fontSize: 20),
-                    ),
-                  ),
-                ],
             ),
-            Padding(
-              padding: EdgeInsets.only(bottom: 0.1*usableHeight(context)),
-              child: GridView.count(
-                  shrinkWrap: true,
-                  primary: false,
-                  padding: const EdgeInsets.all(20),
-                  crossAxisSpacing: 10,
-                  mainAxisSpacing: 10,
-                  crossAxisCount: 2,
-                  physics: BouncingScrollPhysics(),
+          ),
+          title: Text('Runnable'),
+          actions: <Widget>[
+            IconButton(
+              icon: Icon(Icons.settings),
+              tooltip: 'Settings',
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => SettingsPage()),
+                );
+              },
+            ),
+          ],
+        ),
+        // body is the majority of the screen.
+        body: Center(
+          child: ListView(
+              shrinkWrap: true,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
-                    LangBox(
-                      name: "Python",
-                      image: 'python.png',
+                    //RCSelect(type: setType),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(
+                        'Select language',
+                        style: TextStyle(fontSize: 20),
+                      ),
                     ),
-                    LangBox(
-                      name: "Java",
-                      image: 'java.png',
-                    ),
-                    LangBox(
-                      name: "C",
-                      image: 'c.png',
-                    ),
-                    LangBox(
-                      name: "JavaScript",
-                      image: 'javascript.png',
-                    )
                   ],
-              ),
-            ),
-          ]
-        ),
-      )
+                ),
+                Padding(
+                  padding: EdgeInsets.only(bottom: 0.1*usableHeight(context)),
+                  child: GridView.count(
+                    shrinkWrap: true,
+                    primary: false,
+                    padding: const EdgeInsets.all(20),
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10,
+                    crossAxisCount: 2,
+                    physics: BouncingScrollPhysics(),
+                    children: <Widget>[
+                      LangBox(
+                        name: "Python",
+                        image: 'python.png',
+                      ),
+                      LangBox(
+                        name: "Java",
+                        image: 'java.png',
+                      ),
+                      LangBox(
+                        name: "C",
+                        image: 'c.png',
+                      ),
+                      LangBox(
+                        name: "JavaScript",
+                        image: 'javascript.png',
+                      )
+                    ],
+                  ),
+                ),
+              ]
+          ),
+        )
     );
   }
 }
@@ -196,42 +192,42 @@ class LangBox extends StatelessWidget {
 
   Widget build(BuildContext context) {
     return RaisedButton(
-      onPressed: () {
+        onPressed: () {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => RCSelectPage(name: name)),
           );
-      },
-      shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8.0),
-          side: BorderSide(color: Theme.of(context).primaryColor)
-      ),
-      color: Theme.of(context).scaffoldBackgroundColor,
-      child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: <Widget>[
-        Expanded(
-          child: Container(
-            margin: EdgeInsets.all(0.03*usableHeight(context)),
-            decoration: BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('assets/' + image),
-                fit: BoxFit.contain,
+        },
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8.0),
+            side: BorderSide(color: Theme.of(context).primaryColor)
+        ),
+        color: Theme.of(context).scaffoldBackgroundColor,
+        child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
+              Expanded(
+                child: Container(
+                  margin: EdgeInsets.all(0.03*usableHeight(context)),
+                  decoration: BoxDecoration(
+                    image: DecorationImage(
+                      image: AssetImage('assets/' + image),
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
               ),
-            ),
-          ),
-        ),
-        Align(
-          alignment: FractionalOffset.bottomCenter,
-          child: Padding(
-              padding: EdgeInsets.only(bottom: 0.01*usableHeight(context)),
-              child: Text(
-                name,
-                style: TextStyle(fontSize: 20),
-              ) //Your widget here,
-          ),
-        ),
-      ]));
+              Align(
+                alignment: FractionalOffset.bottomCenter,
+                child: Padding(
+                    padding: EdgeInsets.only(bottom: 0.01*usableHeight(context)),
+                    child: Text(
+                      name,
+                      style: TextStyle(fontSize: 20),
+                    ) //Your widget here,
+                ),
+              ),
+            ]));
   }
 }
 // Homepage end
@@ -240,7 +236,6 @@ class LangBox extends StatelessWidget {
 class RCSelectPage extends StatelessWidget {
   RCSelectPage({Key key, this.name}) : super(key: key);
   final String name;
-  //static const String channelName = 'wss://echo.websocket.org'; // For testing websocket
   static const String channelName = 'wss://s4tdw93cwd.execute-api.us-east-1.amazonaws.com/default/';
 
   @override
@@ -258,18 +253,18 @@ class RCSelectPage extends StatelessWidget {
             },
           ),
           title: Text(name),
-            actions: <Widget>[
-              IconButton(
-                icon: Icon(Icons.settings),
-                tooltip: 'Settings',
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => SettingsPage()),
-                  );
-                },
-              ),
-            ],
+          actions: <Widget>[
+            IconButton(
+              icon: Icon(Icons.settings),
+              tooltip: 'Settings',
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => SettingsPage()),
+                );
+              },
+            ),
+          ],
         ),
         body: Center(
           child: ListView(
@@ -279,88 +274,88 @@ class RCSelectPage extends StatelessWidget {
                 Padding(
                   padding: EdgeInsets.symmetric(vertical: 20),
                   child: RaisedButton(
-                      onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => ReplPage(
-                                name: this.name,
-                                channel: IOWebSocketChannel.connect(channelName),
-                            )),
-                          );
-                      },
-                      shape: RoundedRectangleBorder(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => ReplPage(
+                          name: this.name,
+                          channel: IOWebSocketChannel.connect(channelName),
+                        )),
+                      );
+                    },
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(0.03*usableHeight(context)),
+                    ),
+                    color: Theme.of(context).primaryColor,
+                    child: Container(
+                        decoration: BoxDecoration(
+                          image: DecorationImage(
+                            image: AssetImage('assets/select_background.png'),
+                            fit: BoxFit.fill,
+                          ),
                           borderRadius: BorderRadius.circular(0.03*usableHeight(context)),
-                      ),
-                      color: Theme.of(context).primaryColor,
-                      child: Container(
-                          decoration: BoxDecoration(
-                            image: DecorationImage(
-                              image: AssetImage('assets/select_background.png'),
-                              fit: BoxFit.fill,
+                        ),
+                        constraints: BoxConstraints(
+                          minHeight: 0.2*usableHeight(context),
+                          maxHeight: 0.2*usableHeight(context),
+                          minWidth: displayWidth(context),
+                          maxWidth: displayWidth(context),
+                        ),
+                        child: Center(
+                          child: Text(
+                            'REPL',
+                            style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 28
                             ),
-                            borderRadius: BorderRadius.circular(0.03*usableHeight(context)),
                           ),
-                          constraints: BoxConstraints(
-                            minHeight: 0.2*usableHeight(context),
-                            maxHeight: 0.2*usableHeight(context),
-                            minWidth: displayWidth(context),
-                            maxWidth: displayWidth(context),
-                          ),
-                          child: Center(
-                            child: Text(
-                                'REPL',
-                                style: TextStyle(
-                                    color: Colors.black,
-                                    fontSize: 28
-                                ),
-                            ),
-                          )
-                      ),
+                        )
+                    ),
                   ),
                 ),
                 Padding(
                   padding: EdgeInsets.symmetric(vertical: 20),
                   child: RaisedButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => CompilerPage(
-                              name: this.name,
-                              channel: IOWebSocketChannel.connect(channelName),
-                          )),
-                        );
-                      },
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(0.03*usableHeight(context)),
-                      ),
-                      color: Theme.of(context).primaryColor,
-                      child: Container(
-                          decoration: BoxDecoration(
-                            image: DecorationImage(
-                              image: AssetImage('assets/select_background.png'),
-                              fit: BoxFit.fill,
-                            ),
-                            borderRadius: BorderRadius.circular(0.03*usableHeight(context)),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => CompilerPage(
+                          name: this.name,
+                          channel: IOWebSocketChannel.connect(channelName),
+                        )),
+                      );
+                    },
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(0.03*usableHeight(context)),
+                    ),
+                    color: Theme.of(context).primaryColor,
+                    child: Container(
+                        decoration: BoxDecoration(
+                          image: DecorationImage(
+                            image: AssetImage('assets/select_background.png'),
+                            fit: BoxFit.fill,
                           ),
-                          constraints: BoxConstraints(
-                            minHeight: 0.2*usableHeight(context),
-                            maxHeight: 0.2*usableHeight(context),
-                            minWidth: displayWidth(context),
-                            maxWidth: displayWidth(context),
-                          ),
-                          child: Center(
-                            child: Text(
-                              'Compile',
-                              style: TextStyle(
-                                  color: Colors.black,
-                                  fontSize: 28
-                              ),
+                          borderRadius: BorderRadius.circular(0.03*usableHeight(context)),
+                        ),
+                        constraints: BoxConstraints(
+                          minHeight: 0.2*usableHeight(context),
+                          maxHeight: 0.2*usableHeight(context),
+                          minWidth: displayWidth(context),
+                          maxWidth: displayWidth(context),
+                        ),
+                        child: Center(
+                          child: Text(
+                            'Compile',
+                            style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 28
                             ),
-                          )
-                      ),//Your widget here,
+                          ),
+                        )
+                    ),//Your widget here,
                   ),
                 ),
-            ]
+              ]
           ),
         )
     );
@@ -471,121 +466,120 @@ class _ReplPageState extends State<ReplPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          leading: IconButton(
-            icon: Icon(Icons.home),
-            tooltip: 'Home',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => RunnableHome()),
+      appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.home),
+          tooltip: 'Home',
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => RunnableHome()),
+            );
+          },
+        ),
+        title: Text(widget.name),
+        actions: <Widget>[
+          IconButton(
+            icon: Icon(Icons.refresh),
+            tooltip: 'Restart',
+            onPressed: _restart,
+          ),
+          IconButton(
+            icon: Icon(Icons.save),
+            tooltip: 'Save',
+            onPressed: () async {
+              settingsMap = await SharedPreferences.getInstance();
+              _storage = settingsMap.getString('storage');
+              await showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return StatefulBuilder(
+                        builder: (context, setState) {
+                          _setStorageState = setState;
+                          return AlertDialog(
+                            title: Text('Save as text file'),
+                            content: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Form(
+                                  key: _storageFormKey,
+                                  child: TextFormField(
+                                    autocorrect: false,
+                                    controller: _saveController,
+                                    decoration: InputDecoration(
+                                      hintText: 'Your file name',
+                                      border: OutlineInputBorder(),
+                                      contentPadding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                    ),
+                                    maxLines: 1,
+                                    validator: (value) {
+                                      if (value.isEmpty) {
+                                        return 'Please enter a valid file name';
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 8.0),
+                                  child: RaisedButton(
+                                    child: Text(_storage),
+                                    onPressed: _browseFiles,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            actions: [
+                              FlatButton(
+                                child: Text(
+                                  'Save',
+                                ),
+                                onPressed: _saveFile,
+                              ),
+                            ],
+                          );
+                        }
+                    );
+                  }
               );
             },
           ),
-          title: Text(widget.name),
-          actions: <Widget>[
-            IconButton(
-              icon: Icon(Icons.refresh),
-              tooltip: 'Restart',
-              onPressed: _restart,
-            ),
-            IconButton(
-              icon: Icon(Icons.save),
-              tooltip: 'Save',
-              onPressed: () async {
-                settingsMap = await SharedPreferences.getInstance();
-                _storage = settingsMap.getString('storage');
-                await showDialog(
-                    context: context,
-                    builder: (BuildContext context) {
-                      return StatefulBuilder(
-                          builder: (context, setState) {
-                            _setStorageState = setState;
-                            return AlertDialog(
-                              title: Text('Save as text file'),
-                              content: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Form(
-                                    key: _storageFormKey,
-                                    child: TextFormField(
-                                      autocorrect: false,
-                                      controller: _saveController,
-                                      decoration: InputDecoration(
-                                          hintText: 'Your file name',
-                                        border: OutlineInputBorder(),
-                                        contentPadding: const EdgeInsets.symmetric(horizontal: 8.0),
-                                      ),
-                                      maxLines: 1,
-                                      validator: (value) {
-                                        if (value.isEmpty) {
-                                          return 'Please enter a valid file name';
-                                        }
-                                        return null;
-                                      },
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 8.0),
-                                    child: RaisedButton(
-                                      child: Text(_storage),
-                                      onPressed: _browseFiles,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              actions: [
-                                FlatButton(
-                                  child: Text(
-                                    'Save',
-                                  ),
-                                  onPressed: _saveFile,
-                                ),
-                              ],
-                            );
-                          }
-                      );
-                    }
-                );
-              },
-            ),
-            PopupMenuButton<Choice>(
-              onSelected: _select,
-              itemBuilder: (BuildContext context) {
-                return choices.map((Choice choice) {
-                  return PopupMenuItem<Choice>(
-                    value: choice,
-                    child: Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          Icon(choice.icon),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                            child: Text(choice.title),
-                          ),
-                        ]
-                    ),
-                  );
-                }).toList();
-              },
-            )
-          ],
-        ),
-        body: ListView(
-            children: [
-              Container(
-                  margin: const EdgeInsets.all(8.0),
-                  padding: const EdgeInsets.all(8.0),
-                  constraints: BoxConstraints(
-                    minHeight: 0.3*usableHeight(context),
-                    maxHeight: 0.3*usableHeight(context),
-                    minWidth: displayWidth(context),
-                    maxWidth: displayWidth(context),
+          PopupMenuButton<Choice>(
+            onSelected: _select,
+            itemBuilder: (BuildContext context) {
+              return choices.map((Choice choice) {
+                return PopupMenuItem<Choice>(
+                  value: choice,
+                  child: Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Icon(choice.icon),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                          child: Text(choice.title),
+                        ),
+                      ]
                   ),
-                  child: StatefulBuilder(
+                );
+              }).toList();
+            },
+          )
+        ],
+      ),
+      body: ListView(
+          children: [
+            Container(
+                margin: const EdgeInsets.all(8.0),
+                padding: const EdgeInsets.all(8.0),
+                constraints: BoxConstraints(
+                  minHeight: 0.3*usableHeight(context),
+                  maxHeight: 0.3*usableHeight(context),
+                  minWidth: displayWidth(context),
+                  maxWidth: displayWidth(context),
+                ),
+                child: StatefulBuilder(
                     builder: (context, setState) {
                       _setStreamState = setState;
-                      debugPrint('$_outputList');
                       if (_connected) {
                         return Align(
                           alignment: Alignment.topLeft,
@@ -610,81 +604,68 @@ class _ReplPageState extends State<ReplPage> {
                         return CircularProgressIndicator();
                       }
                     }
-                  )
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: <Widget>[
-                      RaisedButton(
-                          color: Color(0xff424242),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8.0),
-                              side: BorderSide(color: Theme.of(context).primaryColor)
-                          ),
-                          onPressed: _sendSubmit,
-                          child: Container(
-                            height: 36,
-                            width: 88,
-                            decoration: BoxDecoration(
-                              image: DecorationImage(
-                                image: AssetImage('assets/runnableicon.png'),
-                                fit: BoxFit.contain,
-                              ),
-                            ),
-                          ),
-                          /*child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              children: [
-                                Icon(Icons.play_arrow),
-                                Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Text(
-                                      'Submit',
-                                      style: TextStyle(fontSize: 16),
-                                    ) //Your widget here,
-                                ),
-                              ]
-                          )*/
+                )
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: <Widget>[
+                    RaisedButton(
+                      color: Color(0xff424242),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                          side: BorderSide(color: Theme.of(context).primaryColor)
                       ),
-                    ]
-                ),
-              ),
-              Container(
-                  margin: const EdgeInsets.all(8.0),
-                  padding: const EdgeInsets.all(8.0),
-                  decoration: BoxDecoration(
-                    border: Border.all(),
-                    borderRadius: BorderRadius.all(Radius.circular(10)),
-                  ),
-                  constraints: BoxConstraints(
-                    minHeight: 0.15*usableHeight(context),
-                    maxHeight: 0.15*usableHeight(context),
-                  ),
-                  child: Align(
-                      alignment: Alignment.bottomCenter,
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.vertical,
-                        reverse: true,
-                        child: Form(
-                          child: TextFormField(
-                            style: TextStyle(fontSize: _fontSize),
-                            autofocus: true,
-                            focusNode: replNode,
-                            autocorrect: false,
-                            controller: _controller,
-                            decoration: InputDecoration.collapsed(
-                                hintText: 'Your code here'
-                            ),
-                            maxLines: null,
+                      onPressed: _sendSubmit,
+                      child: Container(
+                        height: 36,
+                        width: 88,
+                        decoration: BoxDecoration(
+                          image: DecorationImage(
+                            image: AssetImage('assets/runnableicon.png'),
+                            fit: BoxFit.contain,
                           ),
                         ),
-                      )
-                  )
-              )
-            ]
-        ),
+                      ),
+                    ),
+                  ]
+              ),
+            ),
+            Container(
+                margin: const EdgeInsets.all(8.0),
+                padding: const EdgeInsets.all(8.0),
+                decoration: BoxDecoration(
+                  border: Border.all(),
+                  borderRadius: BorderRadius.all(Radius.circular(10)),
+                ),
+                constraints: BoxConstraints(
+                  minHeight: 0.15*usableHeight(context),
+                  maxHeight: 0.15*usableHeight(context),
+                ),
+                child: Align(
+                    alignment: Alignment.bottomCenter,
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.vertical,
+                      reverse: true,
+                      child: Form(
+                        child: TextFormField(
+                          style: TextStyle(fontSize: _fontSize),
+                          autofocus: true,
+                          focusNode: replNode,
+                          autocorrect: false,
+                          controller: _controller,
+                          decoration: InputDecoration.collapsed(
+                              hintText: 'Your code here'
+                          ),
+                          maxLines: null,
+                        ),
+                      ),
+                    )
+                )
+            )
+          ]
+      ),
     );
   }
 
@@ -696,6 +677,7 @@ class _ReplPageState extends State<ReplPage> {
         json.encode(
             {
               "action" : "launch",
+              "api-key": queryApiKey(),
               "lang" : widget.name.toLowerCase(),
               "mode" : "repl",
             }
@@ -762,7 +744,6 @@ class _ReplPageState extends State<ReplPage> {
 
   void _sendSubmit() {
     if (_controller.text.isNotEmpty) {
-      //widget.channel.sink.add(_controller.text);
       _outputList.add('>>> ' + _controller.text);
       widget.channel.sink.add(
           json.encode(
@@ -898,7 +879,7 @@ class _CompilerPageState extends State<CompilerPage> {
         _connected = true;
         _setStreamState(() {});
       } else {
-        _connected = false;
+        //_connected = false;
       }
     });
   }
@@ -906,367 +887,336 @@ class _CompilerPageState extends State<CompilerPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          leading: IconButton(
-            icon: Icon(Icons.home),
-            tooltip: 'Home',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => RunnableHome()),
+      appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.home),
+          tooltip: 'Home',
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => RunnableHome()),
+            );
+          },
+        ),
+        title: Text(widget.name),
+        actions: <Widget>[
+          IconButton(
+            icon: Icon(Icons.stop),
+            tooltip: 'Stop',
+            onPressed: _sendStop,
+          ),
+          IconButton(
+            icon: Icon(Icons.save),
+            tooltip: 'Save',
+            onPressed: () async {
+              settingsMap = await SharedPreferences.getInstance();
+              _storage = settingsMap.getString('storage');
+              await showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return StatefulBuilder(
+                        builder: (context, setState) {
+                          _setStorageState = setState;
+                          return AlertDialog(
+                            title: Text('Save as text file'),
+                            content: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Form(
+                                  key: _storageFormKey,
+                                  child: TextFormField(
+                                    autocorrect: false,
+                                    controller: _saveController,
+                                    decoration: InputDecoration(
+                                      hintText: 'Your file name',
+                                      border: OutlineInputBorder(),
+                                      contentPadding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                    ),
+                                    maxLines: 1,
+                                    validator: (value) {
+                                      if (value.isEmpty) {
+                                        return 'Please enter a valid file name';
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 8.0),
+                                  child: RaisedButton(
+                                    child: Text(_storage),
+                                    onPressed: _browseFiles,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            actions: [
+                              FlatButton(
+                                child: Text(
+                                  'Save',
+                                ),
+                                onPressed: _saveFile,
+                              ),
+                            ],
+                          );
+                        }
+                    );
+                  }
               );
             },
           ),
-          title: Text(widget.name),
-          actions: <Widget>[
-            IconButton(
-              icon: Icon(Icons.stop),
-              tooltip: 'Stop',
-              onPressed: _sendStop,
-            ),
-            IconButton(
-              icon: Icon(Icons.save),
-              tooltip: 'Save',
-              onPressed: () async {
-                settingsMap = await SharedPreferences.getInstance();
-                _storage = settingsMap.getString('storage');
-                await showDialog(
-                    context: context,
-                    builder: (BuildContext context) {
-                      return StatefulBuilder(
-                          builder: (context, setState) {
-                            _setStorageState = setState;
-                            return AlertDialog(
-                              title: Text('Save as text file'),
-                              content: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Form(
-                                    key: _storageFormKey,
-                                    child: TextFormField(
-                                      autocorrect: false,
-                                      controller: _saveController,
-                                      decoration: InputDecoration(
-                                          hintText: 'Your file name',
-                                          border: OutlineInputBorder(),
-                                          contentPadding: const EdgeInsets.symmetric(horizontal: 8.0),
-                                      ),
-                                      maxLines: 1,
-                                      validator: (value) {
-                                        if (value.isEmpty) {
-                                          return 'Please enter a valid file name';
-                                        }
-                                        return null;
-                                      },
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 8.0),
-                                    child: RaisedButton(
-                                      child: Text(_storage),
-                                      onPressed: _browseFiles,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              actions: [
-                                FlatButton(
-                                  child: Text(
-                                    'Save',
-                                    /*style: TextStyle(
-                                      color: Theme.of(context).primaryColor,
-                                    ),*/
-                                  ),
-                                  onPressed: _saveFile,
-                                ),
-                              ],
-                            );
-                          }
-                      );
-                    }
-                );
-              },
-            ),
-            PopupMenuButton<Choice>(
-              onSelected: _select,
-              itemBuilder: (BuildContext context) {
-                return choices.map((Choice choice) {
-                  return PopupMenuItem<Choice>(
-                    value: choice,
-                    child: Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          Icon(choice.icon),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                            child: Text(choice.title),
-                          ),
-                        ]
-                    ),
-                  );
-                }).toList();
-              },
-            )
-          ],
-        ),
-        body: ListView(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: <Widget>[
-                      RaisedButton(
-                          color: Theme.of(context).primaryColor,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8.0),
-                              side: BorderSide(color: Theme.of(context).primaryColor)
-                          ),
-                          onPressed: () async {
-                            _storage = settingsMap.getString('storage');
-                            await showDialog(
-                                context: context,
-                                builder: (BuildContext context) {
-                                  return StatefulBuilder(
-                                      builder: (context, setState) {
-                                        _setLoadState = setState;
-                                        return AlertDialog(
-                                          title: Text('Choose file'),
-                                          content: Column(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              RaisedButton(
-                                                child: Text(_fileToOpen),
-                                                onPressed: _browseSources,
-                                              ),
-                                            ],
-                                          ),
-                                          actions: [
-                                            FlatButton(
-                                              child: Text(
-                                                'Open',
-                                                /*style: TextStyle(
-                                                  color: Theme.of(context).primaryColor,
-                                                ),*/
-                                              ),
-                                              onPressed: _loadFile,
-                                            ),
-                                          ],
-                                        );
-                                      }
-                                  );
-                                }
-                            );
-                          },
-                          child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              children: [
-                                Icon(
-                                  Icons.folder_open,
-                                  color: Colors.black,
-                                ),
-                                Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Text(
-                                      'Open file',
-                                      style: TextStyle(
-                                          color: Colors.black,
-                                          fontSize: 16,
-                                      ),
-                                    ) //Your widget here,
-                                ),
-                              ]
-                          )
-                      ),
-                      RaisedButton(
-                          //color: Theme.of(context).primaryColor,
-                          color: Color(0xff424242),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8.0),
-                              side: BorderSide(color: Theme.of(context).primaryColor)
-                          ),
-                          onPressed: _sendRun,
-                          child: Container(
-                            height: 36,
-                            width: 88,
-                            decoration: BoxDecoration(
-                              image: DecorationImage(
-                                image: AssetImage('assets/runnableicon.png'),
-                                fit: BoxFit.contain,
-                              ),
-                            ),
-                          ),
-                      ),
-                    ]
-                ),
-              ),
-              AnimatedContainer(
-                  duration: Duration(milliseconds: 200),
-                  margin: const EdgeInsets.symmetric(horizontal: 8.0),
-                  padding: const EdgeInsets.all(8.0),
-                  decoration: BoxDecoration(
-                    border: Border.all(),
-                    borderRadius: BorderRadius.all(Radius.circular(10)),
-                  ),
-                  constraints: BoxConstraints(
-                    minHeight: _compNode.hasFocus ? 0.4*usableHeight(context): 96,
-                    maxHeight: _compNode.hasFocus ? 0.4*usableHeight(context): 96,
-                  ),
-                  child: Align(
-                      alignment: Alignment.bottomCenter,
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.vertical,
-                        reverse: true,
-                        child: Form(
-                          child: TextFormField(
-                            onChanged: (text) {
-                              if (text != null) {
-                                settingsMap.setString('autoSaved' + widget.name, text);
-                              }
-                            },
-                            style: TextStyle(fontSize: _fontSize),
-                            autofocus: true,
-                            focusNode: _compNode,
-                            autocorrect: false,
-                            controller: _topController,
-                            decoration: InputDecoration.collapsed(
-                                hintText: 'Your code here'
-                            ),
-                            maxLines: null,
-                          ),
-                        ),
-                      )
-                  )
-              ),
-              AnimatedOpacity(
-                  opacity: _visible ? 1.0 : 0.0,
-                  duration: Duration(milliseconds: 500),
-                  child: Column(
+          PopupMenuButton<Choice>(
+            onSelected: _select,
+            itemBuilder: (BuildContext context) {
+              return choices.map((Choice choice) {
+                return PopupMenuItem<Choice>(
+                  value: choice,
+                  child: Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
                       children: [
-                        Container(
-                            margin: const EdgeInsets.all(8.0),
-                            padding: const EdgeInsets.all(8.0),
-                            constraints: BoxConstraints(
-                              minHeight: 0.3*usableHeight(context),
-                              maxHeight: 0.3*usableHeight(context),
-                              minWidth: displayWidth(context),
-                              maxWidth: displayWidth(context),
-                            ),
-                            child: StatefulBuilder(
-                              builder: (context, setState) {
-                                _setStreamState = setState;
-                                /*if (snapshot.hasData) {
-                                  Map<String, dynamic> outputData = jsonDecode(snapshot.data);
-                                  if (outputData["containerId"] != null) {
-                                    containerId = outputData["containerId"];
-                                  }
-                                  if (outputData["output"] != null) {
-                                    outputList.add(outputData["output"]);
-                                  }
-                                  //outputList.add(snapshot.data);
-                                }*/
-                                debugPrint('$_outputList');
-                                if (_connected) {
-                                  return Align(
-                                    alignment: Alignment.topLeft,
-                                    child: SingleChildScrollView(
-                                      scrollDirection: Axis.vertical,
-                                      reverse: true,
-                                      child: Container(
-                                        constraints: BoxConstraints(
-                                          minWidth: displayWidth(context),
-                                          maxWidth: displayWidth(context),
-                                        ),
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment
-                                              .start,
-                                          children: <Widget>[
-                                            for(var item in _outputList) Text(item, style: TextStyle(fontSize: _fontSize),)
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                } else {
-                                  return CircularProgressIndicator();
-                                }
-                              },
-                            )
-                        ),
+                        Icon(choice.icon),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                          child: Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: <Widget>[
-                                RaisedButton(
-                                    color: Color(0xff424242),
-                                    shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8.0),
-                                        side: BorderSide(color: Theme.of(context).primaryColor)
-                                    ),
-                                    onPressed: _sendSubmit,
-                                    child: Container(
-                                      height: 36,
-                                      width: 88,
-                                      decoration: BoxDecoration(
-                                        image: DecorationImage(
-                                          image: AssetImage('assets/runnableiconleft.png'),
-                                          fit: BoxFit.contain,
+                          child: Text(choice.title),
+                        ),
+                      ]
+                  ),
+                );
+              }).toList();
+            },
+          )
+        ],
+      ),
+      body: ListView(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: <Widget>[
+                    RaisedButton(
+                        color: Theme.of(context).primaryColor,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8.0),
+                            side: BorderSide(color: Theme.of(context).primaryColor)
+                        ),
+                        onPressed: () async {
+                          _storage = settingsMap.getString('storage');
+                          await showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return StatefulBuilder(
+                                    builder: (context, setState) {
+                                      _setLoadState = setState;
+                                      return AlertDialog(
+                                        title: Text('Choose file'),
+                                        content: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            RaisedButton(
+                                              child: Text(_fileToOpen),
+                                              onPressed: _browseSources,
+                                            ),
+                                          ],
                                         ),
-                                      ),
-                                    ),
-                                    /*child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                        children: [
-                                          Icon(Icons.keyboard_arrow_right),
-                                          Padding(
-                                              padding: const EdgeInsets.all(8.0),
-                                              child: Text(
-                                                'Submit',
-                                                style: TextStyle(fontSize: 16),
-                                              ) //Your widget here,
+                                        actions: [
+                                          FlatButton(
+                                            child: Text(
+                                              'Open',
+                                            ),
+                                            onPressed: _loadFile,
                                           ),
-                                        ]
-                                    )*/
-                                ),
-                              ]
+                                        ],
+                                      );
+                                    }
+                                );
+                              }
+                          );
+                        },
+                        child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              Icon(
+                                Icons.folder_open,
+                                color: Colors.black,
+                              ),
+                              Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Text(
+                                    'Open file',
+                                    style: TextStyle(
+                                      color: Colors.black,
+                                      fontSize: 16,
+                                    ),
+                                  ) //Your widget here,
+                              ),
+                            ]
+                        )
+                    ),
+                    RaisedButton(
+                      color: Color(0xff424242),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                          side: BorderSide(color: Theme.of(context).primaryColor)
+                      ),
+                      onPressed: _sendRun,
+                      child: Container(
+                        height: 36,
+                        width: 88,
+                        decoration: BoxDecoration(
+                          image: DecorationImage(
+                            image: AssetImage('assets/runnableicon.png'),
+                            fit: BoxFit.contain,
                           ),
                         ),
-                        Container(
-                            margin: const EdgeInsets.all(8.0),
-                            padding: const EdgeInsets.all(8.0),
-                            decoration: BoxDecoration(
-                              border: Border.all(),
-                              borderRadius: BorderRadius.all(Radius.circular(10)),
-                            ),
-                            constraints: BoxConstraints(
-                              minHeight: 0.15*usableHeight(context),
-                              maxHeight: 0.15*usableHeight(context),
-                            ),
-                            child: Align(
-                                alignment: Alignment.bottomCenter,
-                                child: SingleChildScrollView(
-                                  scrollDirection: Axis.vertical,
-                                  reverse: true,
-                                  child: Form(
-                                    child: TextFormField(
-                                      style: TextStyle(fontSize: _fontSize),
-                                      autocorrect: false,
-                                      controller: _bottomController,
-                                      decoration: InputDecoration.collapsed(
-                                          hintText: 'Provide standard input here'
+                      ),
+                    ),
+                  ]
+              ),
+            ),
+            AnimatedContainer(
+                duration: Duration(milliseconds: 200),
+                margin: const EdgeInsets.symmetric(horizontal: 8.0),
+                padding: const EdgeInsets.all(8.0),
+                decoration: BoxDecoration(
+                  border: Border.all(),
+                  borderRadius: BorderRadius.all(Radius.circular(10)),
+                ),
+                constraints: BoxConstraints(
+                  minHeight: _compNode.hasFocus ? 0.4*usableHeight(context): 96,
+                  maxHeight: _compNode.hasFocus ? 0.4*usableHeight(context): 96,
+                ),
+                child: Align(
+                    alignment: Alignment.bottomCenter,
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.vertical,
+                      reverse: true,
+                      child: Form(
+                        child: TextFormField(
+                          onChanged: (text) {
+                            if (text != null) {
+                              settingsMap.setString('autoSaved' + widget.name, text);
+                            }
+                          },
+                          style: TextStyle(fontSize: _fontSize),
+                          autofocus: true,
+                          focusNode: _compNode,
+                          autocorrect: false,
+                          controller: _topController,
+                          decoration: InputDecoration.collapsed(
+                              hintText: 'Your code here'
+                          ),
+                          maxLines: null,
+                        ),
+                      ),
+                    )
+                )
+            ),
+            AnimatedOpacity(
+                opacity: _visible ? 1.0 : 0.0,
+                duration: Duration(milliseconds: 500),
+                child: Column(
+                    children: [
+                      Container(
+                          margin: const EdgeInsets.all(8.0),
+                          padding: const EdgeInsets.all(8.0),
+                          constraints: BoxConstraints(
+                            minHeight: 0.3*usableHeight(context),
+                            maxHeight: 0.3*usableHeight(context),
+                            minWidth: displayWidth(context),
+                            maxWidth: displayWidth(context),
+                          ),
+                          child: StatefulBuilder(
+                            builder: (context, setState) {
+                              _setStreamState = setState;
+                              if (_connected) {
+                                return Align(
+                                  alignment: Alignment.topLeft,
+                                  child: SingleChildScrollView(
+                                    scrollDirection: Axis.vertical,
+                                    reverse: true,
+                                    child: Container(
+                                      constraints: BoxConstraints(
+                                        minWidth: displayWidth(context),
+                                        maxWidth: displayWidth(context),
                                       ),
-                                      maxLines: null,
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment
+                                            .start,
+                                        children: <Widget>[
+                                          for(var item in _outputList) Text(item, style: TextStyle(fontSize: _fontSize),)
+                                        ],
+                                      ),
                                     ),
                                   ),
-                                )
-                            )
-                        )
-                      ]
-                  )
-              ),
-            ]
-        ),
+                                );
+                              } else {
+                                return CircularProgressIndicator();
+                              }
+                            },
+                          )
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        child: Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: <Widget>[
+                              RaisedButton(
+                                color: Color(0xff424242),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8.0),
+                                    side: BorderSide(color: Theme.of(context).primaryColor)
+                                ),
+                                onPressed: _sendSubmit,
+                                child: Container(
+                                  height: 36,
+                                  width: 88,
+                                  decoration: BoxDecoration(
+                                    image: DecorationImage(
+                                      image: AssetImage('assets/runnableiconleft.png'),
+                                      fit: BoxFit.contain,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ]
+                        ),
+                      ),
+                      Container(
+                          margin: const EdgeInsets.all(8.0),
+                          padding: const EdgeInsets.all(8.0),
+                          decoration: BoxDecoration(
+                            border: Border.all(),
+                            borderRadius: BorderRadius.all(Radius.circular(10)),
+                          ),
+                          constraints: BoxConstraints(
+                            minHeight: 0.15*usableHeight(context),
+                            maxHeight: 0.15*usableHeight(context),
+                          ),
+                          child: Align(
+                              alignment: Alignment.bottomCenter,
+                              child: SingleChildScrollView(
+                                scrollDirection: Axis.vertical,
+                                reverse: true,
+                                child: Form(
+                                  child: TextFormField(
+                                    style: TextStyle(fontSize: _fontSize),
+                                    autocorrect: false,
+                                    controller: _bottomController,
+                                    decoration: InputDecoration.collapsed(
+                                        hintText: 'Provide standard input here'
+                                    ),
+                                    maxLines: null,
+                                  ),
+                                ),
+                              )
+                          )
+                      )
+                    ]
+                )
+            ),
+          ]
+      ),
     );
   }
 
@@ -1335,9 +1285,9 @@ class _CompilerPageState extends State<CompilerPage> {
           _topController.text = contents;
         } catch (e) {
           Scaffold.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Invalid file type'),
-            )
+              SnackBar(
+                content: const Text('Invalid file type'),
+              )
           );
         }
         Navigator.pop(context);
@@ -1370,6 +1320,7 @@ class _CompilerPageState extends State<CompilerPage> {
             json.encode(
                 {
                   "action": "launch",
+                  "api-key": queryApiKey(),
                   "lang": widget.name.toLowerCase(),
                   "mode": "compile",
                   "prog": _topController.text,
@@ -1397,10 +1348,10 @@ class _CompilerPageState extends State<CompilerPage> {
 
   void _sendSubmit() {
     if (_bottomController.text.isNotEmpty) {
-      //outputList.add(_bottomController.text);
       widget.channel.sink.add(
           json.encode(
-              {"action": "input",
+              {
+                "action": "input",
                 "input": _bottomController.text,
                 "containerId": _containerId,
               }
@@ -1461,153 +1412,153 @@ class _SettingsPageState extends State<SettingsPage> {
           title: Text('Settings'),
         ),
         body: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Card(
-                  child: ListTile(
-                    leading: Icon(Icons.book),
-                    title: Text('User guide'),
-                    trailing: Icon(Icons.keyboard_arrow_right),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => UserGuide(fontSize: _fontSize,))
-                      );
-                    }
-                  )
-              ),
-              Card(
-                  child: ListTile(
-                    leading: Icon(Icons.brightness_6),
-                    title: Text('Theme'),
-                    trailing: Container(
-                      width: 110,
-                      child: ButtonTheme(
-                        alignedDropdown: true,
-                        child: DropdownButton<String>(
-                          isExpanded: true,
-                          value: _displayMode,
-                          items: [
-                            DropdownMenuItem(
-                              child: Text('System'),
-                              value: 'System',
-                            ),
-                            DropdownMenuItem(
-                              child: Text('Light'),
-                              value: 'Light',
-                            ),
-                            DropdownMenuItem(
-                                child: Text('Dark'),
-                                value: 'Dark',
-                            ),
-                          ],
-                          onChanged: (value) {
-                            settingsMap.setString('displayMode', value);
-                            setState(() {
-                              _displayMode = value;
-                            });
-                          },
-                        ),
-                      ),
-                    ),
-                    onTap: null,
-                  )
-              ),
-              Card(
-                  child: ListTile(
-                    leading: Icon(Icons.text_fields),
-                    title: Text('Code font size'),
-                    trailing: Container(
-                      width: 110,
-                      child: ButtonTheme(
-                        alignedDropdown: true,
-                        child: DropdownButton<double>(
-                          isExpanded: true,
-                          value: _fontSize,
-                          items: [
-                            DropdownMenuItem(
-                              child: Text('Small'),
-                              value: 14,
-                            ),
-                            DropdownMenuItem(
-                              child: Text('Medium'),
-                              value: 18,
-                            ),
-                            DropdownMenuItem(
-                              child: Text('Large'),
-                              value: 22,
-                            ),
-                          ],
-                          onChanged: (value) {
-                            settingsMap.setDouble('fontSize', value);
-                            setState(() {
-                              _fontSize = value;
-                            });
-                          },
-                        ),
-                      ),
-                    ),
-                    onTap: null,
-                  )
-              ),
-              Card(
-                  child: ListTile(
-                    leading: Icon(Icons.sd_storage),
-                    title: Text('Storage location'),
-                    subtitle: Text(_storage),
-                    onTap: () async {
-                      await showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return StatefulBuilder(
-                            builder: (context, setState) {
-                              _setStorageState = setState;
-                              return AlertDialog(
-                                title: Text('Change storage location'),
-                                content: FlatButton(
-                                    child: Text(_tempStorage),
-                                    onPressed: _browseFiles,
-                                ),
-                                actions: [
-                                  FlatButton(
-                                    child: Text(
-                                      'Save',
-                                      style: TextStyle(
-                                        color: Theme.of(context).primaryColor,
-                                      ),
-                                    ),
-                                    onPressed: _saveLocation,
-                                  ),
-                                ],
-                              );
-                            }
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Card(
+                    child: ListTile(
+                        leading: Icon(Icons.book),
+                        title: Text('User guide'),
+                        trailing: Icon(Icons.keyboard_arrow_right),
+                        onTap: () {
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => UserGuide(fontSize: _fontSize,))
                           );
                         }
-                      ).then((val) {
-                        _tempStorage = _storage; // Reset temp to original on dialog dismissal
-                      });
-                    }
-                  )
-              ),
-              Card(
-                  child: ListTile(
-                    leading: Icon(Icons.help),
-                    title: Text('About'),
-                    trailing: Icon(Icons.keyboard_arrow_right),
-                    onTap: null,
-                  )
-              ),
-              Card(
-                  child: ListTile(
-                    leading: Icon(Icons.bug_report),
-                    title: Text('Report a bug'),
-                    trailing: Icon(Icons.keyboard_arrow_right),
-                    onTap: null,
-                  )
-              ),
-            ],
-          )
+                    )
+                ),
+                Card(
+                    child: ListTile(
+                      leading: Icon(Icons.brightness_6),
+                      title: Text('Theme'),
+                      trailing: Container(
+                        width: 110,
+                        child: ButtonTheme(
+                          alignedDropdown: true,
+                          child: DropdownButton<String>(
+                            isExpanded: true,
+                            value: _displayMode,
+                            items: [
+                              DropdownMenuItem(
+                                child: Text('System'),
+                                value: 'System',
+                              ),
+                              DropdownMenuItem(
+                                child: Text('Light'),
+                                value: 'Light',
+                              ),
+                              DropdownMenuItem(
+                                child: Text('Dark'),
+                                value: 'Dark',
+                              ),
+                            ],
+                            onChanged: (value) {
+                              settingsMap.setString('displayMode', value);
+                              setState(() {
+                                _displayMode = value;
+                              });
+                            },
+                          ),
+                        ),
+                      ),
+                      onTap: null,
+                    )
+                ),
+                Card(
+                    child: ListTile(
+                      leading: Icon(Icons.text_fields),
+                      title: Text('Code font size'),
+                      trailing: Container(
+                        width: 110,
+                        child: ButtonTheme(
+                          alignedDropdown: true,
+                          child: DropdownButton<double>(
+                            isExpanded: true,
+                            value: _fontSize,
+                            items: [
+                              DropdownMenuItem(
+                                child: Text('Small'),
+                                value: 14,
+                              ),
+                              DropdownMenuItem(
+                                child: Text('Medium'),
+                                value: 18,
+                              ),
+                              DropdownMenuItem(
+                                child: Text('Large'),
+                                value: 22,
+                              ),
+                            ],
+                            onChanged: (value) {
+                              settingsMap.setDouble('fontSize', value);
+                              setState(() {
+                                _fontSize = value;
+                              });
+                            },
+                          ),
+                        ),
+                      ),
+                      onTap: null,
+                    )
+                ),
+                Card(
+                    child: ListTile(
+                        leading: Icon(Icons.sd_storage),
+                        title: Text('Storage location'),
+                        subtitle: Text(_storage),
+                        onTap: () async {
+                          await showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return StatefulBuilder(
+                                    builder: (context, setState) {
+                                      _setStorageState = setState;
+                                      return AlertDialog(
+                                        title: Text('Change storage location'),
+                                        content: FlatButton(
+                                          child: Text(_tempStorage),
+                                          onPressed: _browseFiles,
+                                        ),
+                                        actions: [
+                                          FlatButton(
+                                            child: Text(
+                                              'Save',
+                                              style: TextStyle(
+                                                color: Theme.of(context).primaryColor,
+                                              ),
+                                            ),
+                                            onPressed: _saveLocation,
+                                          ),
+                                        ],
+                                      );
+                                    }
+                                );
+                              }
+                          ).then((val) {
+                            _tempStorage = _storage; // Reset temp to original on dialog dismissal
+                          });
+                        }
+                    )
+                ),
+                Card(
+                    child: ListTile(
+                      leading: Icon(Icons.help),
+                      title: Text('About'),
+                      trailing: Icon(Icons.keyboard_arrow_right),
+                      onTap: null,
+                    )
+                ),
+                Card(
+                    child: ListTile(
+                      leading: Icon(Icons.bug_report),
+                      title: Text('Report a bug'),
+                      trailing: Icon(Icons.keyboard_arrow_right),
+                      onTap: null,
+                    )
+                ),
+              ],
+            )
         )
     );
   }
