@@ -743,18 +743,17 @@ class _ReplPageState extends State<ReplPage> {
   // Extra options for top right end
 
   void _sendSubmit() {
-    if (_controller.text.isNotEmpty) {
-      _outputList.add('>>> ' + _controller.text);
-      widget.channel.sink.add(
-          json.encode(
-              {"action": "input",
-                "input": _controller.text,
-                "containerId": _containerId,
-              }
-          )
-      );
-      _controller.clear();
-    }
+    _outputList.add('>>> ' + _controller.text);
+    widget.channel.sink.add(
+        json.encode(
+            {"action": "input",
+              "input": _controller.text,
+              "containerId": _containerId,
+            }
+        )
+    );
+    _setStreamState(() {});
+    _controller.clear();
   }
 
   @override
