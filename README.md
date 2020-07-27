@@ -1,16 +1,23 @@
 # runnable
 
-Runnable frontend
+Runnable is a mobile device application that allows users to access coding environments to evaluate code on the go. It is built and maintained by 2 NUS students as part of a project submission for [Orbital 2020](https://nusskylab-dev.comp.nus.edu.sg/).
 
-## Getting Started
+The frontend of Runnable is a [Flutter](https://flutter.dev/) app, written in [Dart](https://dart.dev/guides/language/language-tour), and edited using [Android Studio](https://developer.android.com/studio).
 
-This project is a starting point for a Flutter application.
+For more information please see the [frontend wiki](https://github.com/team-stack-underflow/runnable-frontend/wiki) and [backend wiki](https://github.com/team-stack-underflow/runnable-backend/wiki).
 
-A few resources to get you started if this is your first Flutter project:
+## Setup
 
-- [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
+1. Install Flutter
 
-For help getting started with Flutter, view our
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Follow the platform-specific instructions [here](https://flutter.dev/docs/get-started/install).
+
+2. Clone this repository and import it into your editor
+
+This may already be included with the previous step.
+
+3. Setup secrets file
+
+Make a copy of `lib/secret_example.dart` named `lib/secret.dart`. Replace the string inside with an appropriate API key (contact the developers for one).
+
+4. Build and run the app
