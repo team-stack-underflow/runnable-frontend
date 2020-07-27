@@ -12,6 +12,11 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v1
+
+    - name: Setup secrets file
+      env:
+        API_KEY: ${{ secrets.RUNNABLE_API_KEY }}
+      run: echo "String queryApiKey() => '$API_KEY';" > lib/secret.dart
       
     - name: Setup Java for Flutter Actions
       uses: actions/setup-java@v1
